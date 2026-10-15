@@ -1,0 +1,48 @@
+{
+  "name": "volto-imsss-2025",
+  "version": "1.0.0-alpha.0",
+  "description": "A new project using Plone 6.",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "keywords": [
+    "volto-addon",
+    "volto",
+    "plone",
+    "react"
+  ],
+  "author": "T Kim Nguyen",
+  "homepage": "https://github.com/tkimnguyen/imsss-2025#readme",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tkimnguyen/imsss-2025"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "i18n": "rm -rf build/messages && NODE_ENV=production i18n --addon",
+    "dry-release": "release-it --dry-run",
+    "release": "release-it",
+    "release-major-alpha": "release-it major --preRelease=alpha",
+    "release-alpha": "release-it --preRelease=alpha"
+  },
+  "addons": [
+    "@kitconcept/volto-light-theme",
+    "@eeacms/volto-hero-block"
+  ],
+  "theme": "@kitconcept/volto-light-theme",
+  "dependencies": {
+    "@eeacms/volto-hero-block": "9.0.2",
+    "@kitconcept/volto-light-theme": "7.8.6"
+  },
+  "peerDependencies": {
+    "@plone/registry": "workspace:*",
+    "@plone/types": "workspace:*",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@plone/scripts": "workspace:*",
+    "release-it": "^19.0.5"
+  }
+}

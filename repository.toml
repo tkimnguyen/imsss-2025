@@ -1,0 +1,37 @@
+[repository]
+name = "imsss-2025"
+managed_by_uv = false
+changelog = "CHANGELOG.md"
+version = "version.txt"
+compose = "docker-compose.yml"
+
+[repository.towncrier]
+section = "Project"
+settings = "towncrier.toml"
+
+[backend]
+path = "backend"
+
+[backend.package]
+name = "imsss_2025"
+path = "backend"
+changelog = "backend/CHANGELOG.md"
+towncrier_settings = "backend/pyproject.toml"
+base_package = "Products.CMFPlone"
+publish = false
+
+[frontend]
+path = "frontend"
+
+[frontend.package]
+name = "volto-imsss-2025"
+path = "frontend/packages/volto-imsss-2025"
+changelog = "frontend/packages/volto-imsss-2025/CHANGELOG.md"
+towncrier_settings = "frontend/packages/volto-imsss-2025/towncrier.toml"
+base_package = "@plone/volto"
+publish = false
+
+[cookieplone]
+template = "project"
+template_version = "eae593d854b137cc3ab915e1c638170cbdfb3a78"
+generated_date = "2025-11-23 17:22:51"
