@@ -59,8 +59,12 @@
     height: 100%;
   }
 
+  /*
+   * Fill the Hero while favoring the upper portion
+   * of the artwork when cropping is necessary.
+   */
   .hero-block-image {
-    background-position: center;
+    background-position: center top;
     background-size: cover;
   }
 
@@ -74,7 +78,7 @@
   }
 
   /*
-   * Position the Hero content over the lower portion
+   * Position Hero content over the lower portion
    * of the artwork.
    */
   .hero-block-body {
@@ -90,8 +94,8 @@
 
   /*
    * VLT gives this nested default block group a white
-   * background. It needs to remain transparent inside
-   * the Hero so that the artwork shows through.
+   * background. Keep it transparent inside the Hero
+   * so the artwork remains visible.
    */
   .hero-block-text .blocks-group-wrapper.default {
     background: transparent;
@@ -103,8 +107,7 @@
   .hero-block-text,
   .hero-block-text h2,
   .hero-block-text p,
-  .hero-block-meta,
-  .hero-block-meta a {
+  .hero-block-meta {
     color: #fff;
     font-family: Georgia, 'Times New Roman', serif;
   }
@@ -117,8 +120,8 @@
   }
 
   /*
-   * VLT constrains the Hero's nested text content to
-   * 620px. Apply the same width to the Hero metadata
+   * VLT constrains the nested Hero text content to
+   * 620px. Use the same centered width for metadata
    * so "Read more..." aligns with the heading.
    */
   .hero-block-meta {
@@ -127,5 +130,40 @@
     margin-top: 16px;
     margin-right: auto;
     margin-left: auto;
+
+    font-family: Georgia, 'Times New Roman', serif;
+
+    /*
+     * Normal and visited states
+     */
+    a,
+    a:link,
+    a:visited {
+      color: #fff !important;
+      background: transparent !important;
+      outline: none !important;
+      box-shadow: none !important;
+      text-decoration: underline;
+      text-decoration-color: #fff;
+    }
+
+    /*
+     * Hover, keyboard focus, and active states.
+     *
+     * No box or outline. A slightly thicker underline
+     * provides the interaction feedback instead.
+     */
+    a:hover,
+    a:focus,
+    a:focus-visible,
+    a:active {
+      color: #fff !important;
+      background: transparent !important;
+      outline: none !important;
+      box-shadow: none !important;
+      text-decoration: underline;
+      text-decoration-color: #fff;
+      text-decoration-thickness: 2px;
+    }
   }
 }
