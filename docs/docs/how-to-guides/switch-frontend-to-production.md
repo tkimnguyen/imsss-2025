@@ -36,13 +36,7 @@ Running a production build instead:
 - The build can use about 3 GB of memory.
   The server has 3.8 GB of RAM and only 512 MB of swap, and the development server uses about 2 GB, so you'll stop the frontend while building.
   The site is down for the few minutes the build takes.
-  Adding swap makes the build more reliable:
-
-  ```shell
-  sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
-  sudo mkswap /swapfile && sudo swapon /swapfile
-  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-  ```
+  Adding swap makes the build more reliable; see the swap section of {doc}`../reference/server`.
 
 ## 1. Create the settings file
 

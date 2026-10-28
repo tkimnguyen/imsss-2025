@@ -186,6 +186,34 @@ ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000
 While it's open, `http://localhost:8080/` reaches the server's Plone backend and Zope management interface, and `http://localhost:3000/` reaches its Volto frontend.
 Don't run a local backend or frontend at the same time, because they use the same ports.
 
+## Swap
+
+As of October 2026, the server has 512 MB of swap on a separate partition, `/dev/sdb`.
+
+The running site needs about 700–800 MB of memory, including Ubuntu itself.
+On a server with 1 GB of memory, add a swap file so that occasional peaks, and reinstalling frontend dependencies during a deploy, don't run out of memory.
+
+To add a 2 GB swap file, run these commands as root:
+
+```shell
+df -h /                          # check there's at least 2 GB free first
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+```
+
+The last line keeps the swap file in use after a reboot.
+The swap file adds to the existing swap partition rather than replacing it.
+
+Check the result:
+
+```shell
+swapon --show      # lists /swapfile with a size of 2G
+free -m            # the Swap row includes the new 2 GB
+```
+
 ## The `admin` account
 
 `admin` is the initial Zope user, with the `Manager` role.

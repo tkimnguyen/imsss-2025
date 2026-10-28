@@ -48,6 +48,9 @@ The script:
 - installs backend dependencies if they changed, and restarts the backend if `backend/` changed
 - checks that `https://new.imsss.net/` responds
 
+Because nothing is built on the server, the server needs only enough memory to run the site, about 700–800 MB.
+On a server with 1 GB of memory, add a swap file first, as described in the "Swap" section of `docs/docs/reference/server.md`.
+
 A frontend deploy makes the site unavailable only for the few seconds of the restart.
 Visitors with the site already open may need to reload the page to get the new version.
 
