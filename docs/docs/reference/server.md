@@ -43,7 +43,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `frontend/core/packages/volto/build/` | The production build of the frontend; `build/BUILD_COMMIT` names the commit it was built from, for builds made in CI |
 | `frontend/core/packages/volto/build.prev/` | The previous build, kept by `devops/scripts/deploy.sh` so a deploy can go back to it |
 | `frontend/core/packages/volto/build.new/`, `build.failed/` | Left by `deploy.sh` only if a deploy stopped part-way, or a new build failed to start; safe to delete |
-| `/etc/imsss-deploy.env` | GitHub token that `deploy.sh` uses to download builds from CI, as `GITHUB_TOKEN=...`; owned by root, mode 600. Not created yet. |
+| `/etc/imsss-deploy.env` | GitHub token that `deploy.sh` uses to download builds from CI, as `GITHUB_TOKEN=...`; owned by root, mode 600. A fine-grained token with read access to Actions on `tkimnguyen/imsss-2025` only, created on October 28, 2026. Renew it before it expires. |
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
 | `/root/plone.conf.bak-20261028` | Copy of the nginx site configuration from before the `robots.txt` rule was added; safe to delete |
