@@ -183,6 +183,30 @@ ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000
 While it's open, `http://localhost:8080/` reaches the server's Plone backend and Zope management interface, and `http://localhost:3000/` reaches its Volto frontend.
 Don't run a local backend or frontend at the same time, because they use the same ports.
 
+## The `admin` account
+
+`admin` is the initial Zope user, with the `Manager` role.
+It lives in the user folder at the Zope root, `/acl_users`, not in the Plone site's `/Plone/acl_users`.
+The password was last changed on October 28, 2026.
+
+The ZMI logs you in with HTTP Basic authentication.
+<!-- vale Microsoft.We = NO -->
+VS Code's built-in browser doesn't show the login prompt and displays "We're sorry, but there seems to be an error…" instead, so use a regular browser.
+<!-- vale Microsoft.We = YES -->
+
+To change the password:
+
+1.  Open the tunnel above, then open `http://localhost:8080/manage_main` in a regular browser and log in as `admin`.
+2.  Select {guilabel}`acl_users` at the Zope root.
+3.  Select {guilabel}`admin`, enter the new password in both password fields, keep the {guilabel}`Manager` role, and save.
+    If `acl_users` lists plugins instead of users, select {guilabel}`users`, then the {guilabel}`Password` link for `admin`.
+4.  Log in again with the new password when the browser asks.
+
+Volto sessions that are already logged in stay valid until their login token expires.
+
+`initial_user_password` in `backend/instance.yaml` sets the password only when the instance is first created.
+It doesn't change the live password, and the live password isn't stored in this repository.
+
 ## Backups
 
 None are configured.
