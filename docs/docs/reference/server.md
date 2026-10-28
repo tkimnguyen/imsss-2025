@@ -22,6 +22,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 | SSH user for the site | `plone` |
 | Docker | Not installed |
 | Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026 |
+| SSH logins | Keys only, for every account; root may log in with a key but never with a password. Set on October 28, 2026 |
 | SSH protection | fail2ban bans addresses that keep failing to log in over SSH; set up on October 28, 2026 |
 
 ## Paths
@@ -38,6 +39,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `backend/instance/var/filestorage-orig/`, `blobs-orig/` | Older copies of the database, kept from setup |
 | `frontend/volto.config.js` | Volto add-on and theme configuration |
 | `/swapfile` | 2 GB swap file, listed in `/etc/fstab` |
+| `/etc/ssh/sshd_config.d/00-imsss.conf` | Turns off password logins over SSH; see below |
 | `/etc/fail2ban/jail.d/imsss.local` | fail2ban settings for the SSH jail; see below |
 | `/etc/systemd/journald.conf.d/size.conf` | Limits the systemd journal to 200 MB (`SystemMaxUse=200M`) |
 | `/etc/systemd/system/imsss-backend.service` | Backend service unit |
@@ -178,6 +180,33 @@ sudo tail -f /var/log/nginx/new.imsss.net.error.log
 ss -ltn | grep -E ':3000|:8080'                         # check both apps are listening
 sudo fail2ban-client status sshd                        # addresses currently banned from SSH
 ```
+
+## Logging in to the server
+
+SSH accepts only key logins.
+`/etc/ssh/sshd_config.d/00-imsss.conf` sets:
+
+```ini
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+```
+
+The SSH server uses the first value it finds for each setting, and it reads the files in `sshd_config.d/` before the rest of `/etc/ssh/sshd_config`.
+So this file overrides the main file, which still contains the Ubuntu defaults.
+
+To give someone access, add their public key to `~/.ssh/authorized_keys` for `plone` or `root`.
+Account passwords still work for `sudo` and the hosting provider's web console, but not over SSH.
+
+Before changing these settings, keep an SSH session open, then check the configuration and reload:
+
+```shell
+sudo sshd -t
+sudo systemctl reload ssh.service
+```
+
+Test a new login from another terminal before closing the open session.
+If the new login fails, use the open session to fix the file.
 
 ## fail2ban
 
