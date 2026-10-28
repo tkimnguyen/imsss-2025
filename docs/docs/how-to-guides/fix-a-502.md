@@ -80,8 +80,8 @@ Also open the site in a browser without an SSH tunnel, for example on your phone
     It happened again on October 28, 2026, at 09:14 and 13:20 UTC.
     Many `TypeError: Converting circular structure to JSON ... issuerCertificate` lines before it show that HTTPS requests made during page rendering were failing.
 
-    To stop this crash, have nginx fetch `robots.txt` from Plone, so Volto's handler never runs.
-    Add this block to the port 443 `server` in `/etc/nginx/sites-enabled/plone.conf`, before `location ~ /`:
+    To stop this crash, nginx now fetches `robots.txt` from Plone, so Volto's handler never runs.
+    This block was added to the port 443 `server` in `/etc/nginx/sites-enabled/plone.conf`, before `location ~ /`, on October 28, 2026:
 
     ```nginx
     location = /robots.txt {
@@ -91,7 +91,16 @@ Also open the site in a browser without an SSH tunnel, for example on your phone
     }
     ```
 
-    Then check and reload the configuration with `sudo nginx -t && sudo systemctl reload nginx`.
+    The configuration from before the change is saved as `/root/plone.conf.bak-20261028`.
+    To undo the change, run these commands as root:
+
+    ```shell
+    cp /root/plone.conf.bak-20261028 /etc/nginx/sites-enabled/plone.conf
+    nginx -t && systemctl reload nginx
+    ```
+
+    The backup is outside `/etc/nginx/`, so nginx doesn't load it.
+    Delete it once you no longer need to undo the change.
 
 `Can't resolve '.../packages/volto-imsss-2025/src/theme/...'`
 :   A file that the theme's SCSS refers to is missing from the checkout.

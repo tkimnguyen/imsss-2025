@@ -13,7 +13,7 @@
 | Backend | `imsss-backend.service` runs Plone 6.1.3 (Python 3.12) with `backend/.venv/bin/runwsgi backend/instance/etc/zope.ini`, listening on `127.0.0.1:8080`. The Plone site ID is `Plone`. |
 | Database | ZODB FileStorage at `backend/instance/var/filestorage/Data.fs`, with images and files in `backend/instance/var/blobs`. There is no PostgreSQL. |
 | Frontend | `imsss-frontend.service` runs `pnpm --filter @plone/volto start`, which is the Volto 18.29.1 **development server**, listening on `127.0.0.1:3000` (plus a webpack dev server on `[::1]:3001`). |
-| Web server | nginx, configured in `/etc/nginx/sites-enabled/plone.conf`. It terminates TLS, sends `/++api++` to the backend (rewritten through the Virtual Host Monster to `/Plone`), and sends everything else to the frontend. HTTP redirects to HTTPS. |
+| Web server | nginx, configured in `/etc/nginx/sites-enabled/plone.conf`. It terminates TLS, sends `/++api++` and `/robots.txt` to the backend (rewritten through the Virtual Host Monster to `/Plone`), and sends everything else to the frontend. HTTP redirects to HTTPS. |
 | TLS certificate | Let's Encrypt, managed by the certbot snap. `snap.certbot.renew.timer` renews it automatically. |
 | Backups | **None are configured.** `Data.fs` and `blobs` exist only on the server's disk. |
 

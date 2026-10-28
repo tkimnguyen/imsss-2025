@@ -39,6 +39,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `/etc/systemd/system/imsss-frontend.service` | Frontend service unit |
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
+| `/root/plone.conf.bak-20261028` | Copy of the nginx site configuration from before the `robots.txt` rule was added; safe to delete |
 
 The `backend/instance/` folder is generated during installation and isn't in git.
 
@@ -107,6 +108,9 @@ Port 443
 
     - `/++api++` and everything below it goes to the backend.
       nginx rewrites the path to `/VirtualHostBase/https/new.imsss.net/Plone/++api++/VirtualHostRoot/...`, so Plone generates `https://new.imsss.net` URLs.
+    - `/robots.txt` goes to the backend, rewritten to `/VirtualHostBase/https/new.imsss.net:443/Plone/VirtualHostRoot/robots.txt`, so Plone generates it.
+      This rule was added on October 28, 2026, to stop a crash in Volto's own `robots.txt` handler.
+      See {doc}`../how-to-guides/fix-a-502`.
     - Files ending in `.js`, `.css`, or font extensions, and static images, go to the frontend with a one-year `Cache-Control: public` header.
     - Everything else goes to the frontend.
 
