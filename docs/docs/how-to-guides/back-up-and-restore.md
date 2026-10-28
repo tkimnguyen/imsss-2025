@@ -25,7 +25,7 @@ The Linode Backup Service backs up the server's whole disk, keeping about two we
 See the "Backups" section of {doc}`../reference/server` for what it covers.
 The server also makes its own daily `repozo` backups of the database and blobs, set up on October 28, 2026, as described in "Schedule a daily database backup" below.
 They keep 30 days of restore points, and they can restore only the content instead of the whole disk.
-They're on the server's disk, so to keep them if the server is lost, copy them off now and then, as described below.
+They're on the server's disk, so a Mac also copies them every day and keeps a longer history, as described in "Copy the backups off the server" below.
 
 ## Restore from a Linode backup
 
@@ -145,16 +145,94 @@ Use these steps to set it up again, for example on a new server.
     sudo ls -lh /home/plone/backups/filestorage /home/plone/backups/blobs
     ```
 
-````{important}
-Backups stored on the same disk don't protect against losing the server, and the Linode backups keep only about two weeks.
-To keep a longer history somewhere else, copy the backups to another machine now and then, for example from your own computer:
+## Copy the backups off the server
 
-```shell
-rsync -a plone@new.imsss.net:backups/ ~/imsss-backups/
-```
+Backups on the server's disk don't survive losing the server, and the Linode backups keep only about two weeks.
+So since October 28, 2026, the maintainer's Mac copies the backups every day and keeps a longer history.
+It uses `devops/scripts/pull-backups.sh`, which launchd runs at 18:00 local time, and again at login.
+If the Mac is asleep at 18:00, launchd runs the copy when it wakes up.
 
-They're small enough, about 50 MB a day, to keep many months.
-````
+The copy in `~/imsss-backups` keeps:
+
+- everything from the last 45 days
+- after that, each weekly full database backup, with the blob archive from the same day
+- after a year, only the first of those in each month
+
+At October 2026 sizes, that's about 4 GB after the first year, growing by about 600 MB a year after that, and more as the site adds images and files.
+The script removes old incremental database backups one whole week at a time, because `repozo` needs every incremental backup between a full backup and the point being restored.
+It shows a macOS notification if the copy fails, or if the newest backup is more than 3 days old.
+
+The copy logs in with its own SSH key, `~/.ssh/imsss_backup_pull`, which has no passphrase so that it can run unattended.
+On the server, `plone`'s `authorized_keys` limits that key to reading `/home/plone/backups` with `rrsync -ro`.
+It can't open a shell, run commands, open tunnels, or write or delete files.
+The backups include password hashes, so keep them only on an encrypted disk, such as a Mac with FileVault turned on.
+
+### Set up the copy on a Mac
+
+1.  Install Homebrew's `rsync`.
+    The `rsync` that comes with macOS, `openrsync`, sends options that `rrsync` refuses.
+
+    ```shell
+    brew install rsync
+    ```
+
+2.  Create a key, and add it to `/home/plone/.ssh/authorized_keys` on the server, restricted to the backups folder.
+
+    ```shell
+    ssh-keygen -t ed25519 -N "" -C "imsss-backup-pull" -f ~/.ssh/imsss_backup_pull
+    echo "command=\"/usr/bin/rrsync -ro /home/plone/backups\",restrict $(cat ~/.ssh/imsss_backup_pull.pub)" |
+        ssh plone@new.imsss.net 'cat >> ~/.ssh/authorized_keys'
+    ```
+
+3.  Install the script.
+
+    ```shell
+    mkdir -p ~/.local/bin ~/imsss-backups
+    install -m 755 devops/scripts/pull-backups.sh ~/.local/bin/imsss-pull-backups
+    ```
+
+4.  Save this as `~/Library/LaunchAgents/net.imsss.backup-pull.plist`, replacing `USER` with your macOS user name.
+
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>net.imsss.backup-pull</string>
+        <key>ProgramArguments</key>
+        <array>
+            <string>/bin/zsh</string>
+            <string>/Users/USER/.local/bin/imsss-pull-backups</string>
+        </array>
+        <key>StartCalendarInterval</key>
+        <dict>
+            <key>Hour</key>
+            <integer>18</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>StandardOutPath</key>
+        <string>/Users/USER/imsss-backups/pull.log</string>
+        <key>StandardErrorPath</key>
+        <string>/Users/USER/imsss-backups/pull.log</string>
+    </dict>
+    </plist>
+    ```
+
+5.  Load the launchd job, which also runs the first copy, and check the log.
+
+    ```shell
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/net.imsss.backup-pull.plist
+    cat ~/imsss-backups/pull.log
+    ```
+
+After changing the script in the repository, install it again with step 3.
+To stop the copies, run `launchctl bootout gui/$(id -u)/net.imsss.backup-pull` and delete the plist file.
+
+To restore from the Mac's copy, copy the files back to `/home/plone/backups` on the server, or point `repozo -R -r` at a folder holding them.
 
 ## Restore from a database backup
 

@@ -199,6 +199,7 @@ The SSH server uses the first value it finds for each setting, and it reads the 
 So this file overrides the main file, which still contains the Ubuntu defaults.
 
 To give someone access, add their public key to `~/.ssh/authorized_keys` for `plone` or `root`.
+`plone`'s file also has a key that can only read the backups, used to copy them off the server; see {doc}`../how-to-guides/back-up-and-restore`.
 Account passwords still work for `sudo` and the hosting provider's web console, but not over SSH.
 
 Before changing these settings, keep an SSH session open, then check the configuration and reload:
@@ -328,4 +329,6 @@ journalctl -u imsss-backup.service -n 20 --no-pager     # output of the last bac
 sudo ls -lh /home/plone/backups/filestorage /home/plone/backups/blobs
 ```
 
-For how to restore from either kind of backup, see {doc}`../how-to-guides/back-up-and-restore`.
+The maintainer's Mac copies these backups every day and keeps a longer history.
+
+For how that copy works, and how to restore from any of these backups, see {doc}`../how-to-guides/back-up-and-restore`.
