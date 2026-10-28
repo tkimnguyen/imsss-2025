@@ -32,36 +32,42 @@ ss -ltn | grep -E ':3000|:8080'
 
 ## 2. Find out why the frontend stopped
 
-```{note}
-`systemctl status imsss-frontend.service` can report `active (running)` even when the frontend is down.
-The frontend currently runs as a development server, in which the process that serves pages can exit while its parent process keeps running.
-Check the port and the journal, not only the status.
-```
+The frontend runs a production build.
+When it crashes, its main process exits and systemd restarts it 5 seconds later, so a single crash causes only a short outage.
+A 502 that lasts longer usually means the frontend fails again each time it starts.
 
-Look for the line that marks the moment the page server exited:
+Check whether systemd keeps restarting it:
 
 ```shell
-journalctl -u imsss-frontend.service --no-pager -o short-iso | grep -n "Script exited" | tail -3
+systemctl status imsss-frontend.service --no-pager | sed -n 1,8p
+systemctl show imsss-frontend.service -p NRestarts
 ```
 
-Then read the error just before it, replacing the times with the ones you found:
+`activating (auto-restart)` or a growing `NRestarts` count means it keeps failing.
+Look for the moments it exited:
+
+```shell
+journalctl -u imsss-frontend.service --no-pager -o short-iso | grep -nE "Main process exited|Failed with result" | tail -5
+```
+
+Then read the error just before one of them, replacing the times with the ones you found:
 
 ```shell
 journalctl -u imsss-frontend.service --no-pager -o short-iso \
-    --since "2026-10-27 22:20" --until "2026-10-27 22:29" | grep -v '^\S* \S* pnpm\[[0-9]*\]:\s*at '
+    --since "2026-10-28 15:10" --until "2026-10-28 15:12" | grep -v '^\S* \S* \S*\[[0-9]*\]:\s*at '
 ```
 
 The `grep -v` hides stack trace lines so that the error messages stand out.
 
-## 3. Restart and wait until the site responds
+## 3. Restart the frontend
 
 ```shell
-sudo systemctl restart imsss-frontend.service && \
-until curl -fsS -o /dev/null http://127.0.0.1:3000/; do sleep 2; done && \
-echo "frontend is serving on :3000"
+sudo systemctl restart imsss-frontend.service
 ```
 
-The development server compiles the whole site on startup, which takes a minute or two.
+The command waits until the frontend serves a page, which takes about 5 seconds.
+If the frontend doesn't respond within 120 seconds, the command fails, and `systemctl status` shows why.
+If it keeps failing after a deploy, rebuild the frontend as described in the deployment section of `devops/README.md`.
 
 ## 4. Check the site from outside
 
@@ -106,5 +112,7 @@ Also open the site in a browser without an SSH tunnel, for example on your phone
 :   A file that the theme's SCSS refers to is missing from the checkout.
     Check `git status` on the server; the file may have been deleted or not yet pulled.
 
-Switching the frontend to a production build stops a crash from leaving the site down, because systemd then restarts the frontend automatically.
-See {doc}`switch-frontend-to-production`.
+`Cannot find module '@kitconcept/volto-light-theme'` at startup
+:   Volto can't find the site's add-ons from its own folder.
+    Check that `frontend/.npmrc` hoists `@kitconcept/*` and `@eeacms/*`, then run `pnpm install` and `pnpm build` in `frontend/`.
+    See {doc}`switch-frontend-to-production`.

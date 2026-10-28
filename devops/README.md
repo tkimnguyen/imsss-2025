@@ -12,30 +12,16 @@
 | Code | A git checkout of this repository at `/home/plone/imsss.net-plone-6.1.3/imsss-2025`, owned by the `plone` user, on `main` |
 | Backend | `imsss-backend.service` runs Plone 6.1.3 (Python 3.12) with `backend/.venv/bin/runwsgi backend/instance/etc/zope.ini`, listening on `127.0.0.1:8080`. The Plone site ID is `Plone`. |
 | Database | ZODB FileStorage at `backend/instance/var/filestorage/Data.fs`, with images and files in `backend/instance/var/blobs`. There is no PostgreSQL. |
-| Frontend | `imsss-frontend.service` runs `pnpm --filter @plone/volto start`, which is the Volto 18.29.1 **development server**, listening on `127.0.0.1:3000` (plus a webpack dev server on `[::1]:3001`). |
+| Frontend | `imsss-frontend.service` runs a **production build** of Volto 18.29.1 with `pnpm start:prod`, listening on `127.0.0.1:3000`. Its settings are in `/etc/imsss-frontend.env`. |
 | Web server | nginx, configured in `/etc/nginx/sites-enabled/plone.conf`. It terminates TLS, sends `/++api++` and `/robots.txt` to the backend (rewritten through the Virtual Host Monster to `/Plone`), and sends everything else to the frontend. HTTP redirects to HTTPS. |
 | TLS certificate | Let's Encrypt, managed by the certbot snap. `snap.certbot.renew.timer` renews it automatically. |
+| Firewall | `ufw` allows only SSH (22) and HTTP/HTTPS (80, 443) from outside. |
 | Backups | **None are configured.** `Data.fs` and `blobs` exist only on the server's disk. |
 
 The systemd unit files live in `/etc/systemd/system/` on the server and are not in this repository.
 Both units run as `plone` and use `Restart=on-failure`.
-
-### Known problems with the current setup
-
-- **Visitors see an unstyled site.**
-  The development server tells browsers to load the site's JavaScript and CSS from `http://localhost:3001`, which refers to each visitor's own computer.
-  The site only looks right for someone forwarding those ports to the server through an SSH tunnel, as below.
-  Running a production build of the frontend fixes this for everyone.
-
-  ```shell
-  ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000 -L3001:localhost:3001
-  ```
-
-  While the tunnel is open, `localhost:3000`, `3001`, and `8080` on your computer point to the server, so don't run a local Volto or Plone at the same time.
-  Without the tunnel, a local Volto development server on port 3001 will answer instead, and new.imsss.net will show your local build or its errors.
-- **Frontend crashes can go unnoticed.**
-  In development mode the Node.js process that serves pages can exit while the parent `pnpm` process keeps running.
-  When that happens `systemctl status` still reports `active (running)`, systemd does not restart it, and nginx returns `502 Bad Gateway` until someone restarts the service.
+The frontend's production settings are in a drop-in, `/etc/systemd/system/imsss-frontend.service.d/override.conf`.
+The frontend switched from the Volto development server to a production build on October 28, 2026.
 
 ### Deploy a change
 
@@ -49,16 +35,26 @@ Both units run as `plone` and use `Restart=on-failure`.
     git pull --ff-only
     ```
 
-3.  The frontend development server picks up frontend changes on its own.
-    For backend changes, or if the frontend is not responding, restart the service and wait until it serves pages again.
+3.  For frontend changes, stop the frontend, rebuild, and start it again.
+    The site is unavailable for the few minutes the build takes.
 
     ```shell
-    sudo systemctl restart imsss-frontend.service && \
-    until curl -fsS -o /dev/null http://127.0.0.1:3000/; do sleep 2; done && \
-    echo "frontend is serving on :3000"
+    sudo systemctl stop imsss-frontend.service
+    cd frontend
+    pnpm install                                  # only if dependencies changed
+    set -a; . /etc/imsss-frontend.env; set +a
+    pnpm build
+    sudo systemctl start imsss-frontend.service   # waits until the site serves pages
     ```
 
-    The backend restarts the same way with `sudo systemctl restart imsss-backend.service`.
+    Pulling alone doesn't change the live frontend.
+    Visitors with the site already open may need to reload the page to get the new version.
+
+4.  For backend changes, restart the backend.
+
+    ```shell
+    sudo systemctl restart imsss-backend.service
+    ```
 
 ### Check status and logs
 
@@ -68,10 +64,22 @@ journalctl -u imsss-frontend.service -n 100 --no-pager    # frontend output and 
 journalctl -u imsss-backend.service -n 100 --no-pager     # backend output and errors
 sudo tail -n 50 /var/log/nginx/new.imsss.net.error.log
 ss -ltn | grep -E ':3000|:8080'                           # are both apps listening?
+sudo ufw status                                           # firewall rules
 ```
 
-If the site returns `502 Bad Gateway`, look in the frontend journal for `sswp> !!! Script exited with code 1`.
-That line means the frontend app server has stopped, and the service needs a restart.
+If the frontend crashes, systemd restarts it after 5 seconds.
+If the site keeps returning `502 Bad Gateway`, see the "Fix a 502 Bad Gateway error" guide in `docs/`.
+
+### Reach the apps from your computer
+
+Both apps listen only on the server's loopback interface.
+To reach them from your computer, open a tunnel:
+
+```shell
+ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000
+```
+
+While the tunnel is open, `localhost:3000` and `localhost:8080` on your computer point to the server, so don't run a local Volto or Plone at the same time.
 
 ## The template's Docker deployment (not in use)
 

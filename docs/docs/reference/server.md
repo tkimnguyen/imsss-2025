@@ -21,6 +21,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 | Resources | 2 vCPU, 3.8 GB RAM, 512 MB swap, 25 GB disk |
 | SSH user for the site | `plone` |
 | Docker | Not installed |
+| Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026 |
 
 ## Paths
 
@@ -37,11 +38,13 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `frontend/volto.config.js` | Volto add-on and theme configuration |
 | `/etc/systemd/system/imsss-backend.service` | Backend service unit |
 | `/etc/systemd/system/imsss-frontend.service` | Frontend service unit |
+| `/etc/systemd/system/imsss-frontend.service.d/override.conf` | Drop-in that runs the production build of the frontend |
+| `/etc/imsss-frontend.env` | Settings for building and running the production build of the frontend |
+| `frontend/core/packages/volto/build/` | The production build of the frontend |
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
 | `/root/plone.conf.bak-20261028` | Copy of the nginx site configuration from before the `robots.txt` rule was added; safe to delete |
-| `/etc/imsss-frontend.env` | `RAZZLE_PUBLIC_URL` and `RAZZLE_INTERNAL_API_PATH` for a production build of the frontend. Created on October 28, 2026, for {doc}`../how-to-guides/switch-frontend-to-production`. The current development-server unit doesn't read it. |
-| `/home/plone/frontend-build-20261028.log` | Output of the first production build, on October 28, 2026; safe to delete |
+| `/home/plone/frontend-build-20261028.log` | Output of the first two production builds, on October 28, 2026; safe to delete |
 
 The `backend/instance/` folder is generated during installation and isn't in git.
 
@@ -97,8 +100,34 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-`pnpm --filter @plone/volto start` runs the Volto **development server**.
-It listens on `127.0.0.1:3000` for pages and on `[::1]:3001` for its webpack assets.
+The unit file above still contains the original development-server command.
+Since October 28, 2026, a drop-in replaces it with the production build:
+
+```ini
+# /etc/systemd/system/imsss-frontend.service.d/override.conf
+[Service]
+EnvironmentFile=/etc/imsss-frontend.env
+Environment="NODE_ENV=production"
+ExecStart=
+ExecStart=/home/plone/.nvm/versions/node/v22.21.1/bin/pnpm start:prod
+ExecStartPost=/bin/sh -c 'until curl -fsS -o /dev/null http://127.0.0.1:3000/; do sleep 2; done'
+TimeoutStartSec=120
+```
+
+`/etc/imsss-frontend.env` holds:
+
+```ini
+RAZZLE_PUBLIC_URL=https://new.imsss.net
+RAZZLE_INTERNAL_API_PATH=http://localhost:8080/Plone
+RAZZLE_BIND_ADDRESS=127.0.0.1
+```
+
+`RAZZLE_BIND_ADDRESS`
+:   Makes the frontend listen only on `127.0.0.1:3000`.
+    Without it, Volto's production server listens on every network interface.
+
+`systemctl start` and `systemctl restart` wait until the frontend serves a page, which takes about 5 seconds.
+`systemctl cat imsss-frontend.service` shows the unit and the drop-in together.
 Node.js 22.21.1 is installed with nvm for the `plone` user.
 
 ## nginx
@@ -148,7 +177,7 @@ Both apps listen only on the server's loopback interface.
 To reach them from your computer, open a tunnel:
 
 ```shell
-ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000 -L3001:localhost:3001
+ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000
 ```
 
 While it's open, `http://localhost:8080/` reaches the server's Plone backend and Zope management interface, and `http://localhost:3000/` reaches its Volto frontend.

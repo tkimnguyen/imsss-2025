@@ -10,12 +10,12 @@ myst:
 # Switch the frontend to a production build
 
 ```{note}
-This guide describes a planned change.
-As of October 2026, the frontend still runs as a development server.
-Once you've made the switch, update {doc}`../reference/server` and the deployment section of `devops/README.md` to match.
+new.imsss.net switched to a production build on October 28, 2026, following this guide.
+Keep the guide for setting up another server, or for redoing the switch after a rollback.
+For deploying changes now, see the deployment section of `devops/README.md`.
 ```
 
-The frontend service currently runs `pnpm start`, the Volto development server.
+Before the switch, the frontend service ran `pnpm start`, the Volto development server.
 Running a production build instead:
 
 - serves the site's JavaScript and CSS through nginx, so every visitor gets a styled site without an SSH tunnel
@@ -52,6 +52,7 @@ Keep them in one file, `/etc/imsss-frontend.env`:
 ```ini
 RAZZLE_PUBLIC_URL=https://new.imsss.net
 RAZZLE_INTERNAL_API_PATH=http://localhost:8080/Plone
+RAZZLE_BIND_ADDRESS=127.0.0.1
 ```
 
 `RAZZLE_PUBLIC_URL`
@@ -61,6 +62,11 @@ RAZZLE_INTERNAL_API_PATH=http://localhost:8080/Plone
 :   Where the frontend fetches content while rendering pages on the server.
     Pointing it straight at the backend over plain HTTP avoids a round trip through `https://new.imsss.net`.
     That round trip is the likely source of the HTTPS errors that preceded the October 27, 2026, outage.
+
+`RAZZLE_BIND_ADDRESS`
+:   The network address the frontend listens on.
+    Volto's production server listens on every interface by default, which exposes port 3000 to the internet when no firewall blocks it.
+    `127.0.0.1` keeps it reachable only through nginx.
 
 ## 2. Build the frontend
 
@@ -129,6 +135,11 @@ curl -s -o /dev/null -w '%{http_code}\n' https://new.imsss.net/
 ```
 
 Then open the site in a browser **without** an SSH tunnel and check that it's styled, that you can log in, and that editing works.
+Also check that port 3000 isn't reachable from outside, for example with `curl -m 8 http://new.imsss.net:3000/` from your own computer.
+
+Browser tabs opened before the switch still run the development server's scripts.
+Editing in such a tab fails with `Loading chunk Form failed`, naming a `localhost:3001` address.
+Reloading the page fixes it.
 
 ## Deploy changes afterward
 

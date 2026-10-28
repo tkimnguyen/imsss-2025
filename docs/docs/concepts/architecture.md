@@ -71,10 +71,19 @@ This repository holds both applications.
 The server runs a git checkout of this repository.
 For the details of the server and its services, see {doc}`../reference/server`.
 
-## The development server
+## Development server and production build
 
-The frontend on the server currently runs as Volto's development server.
-That server is designed for a developer's own computer: it compiles code as files change, and it tells the browser to load JavaScript and CSS from `http://localhost:3001`.
-On a public site, that address points at each visitor's own computer, so the page loads without scripts or styles unless the visitor has an SSH tunnel open to the server.
-A production build serves those files from the site's own address.
+Volto runs in one of two modes.
+
+The development server
+:   Compiles the code as files change and tells the browser to load JavaScript and CSS from `http://localhost:3001`.
+    It's meant for a developer's own computer, where that address points at the development server itself.
+    On a public site, that address points at each visitor's own computer, so pages load without scripts or styles.
+
+The production build
+:   Compiles everything once, ahead of time, and serves the JavaScript and CSS from the site's own address under `/static/`.
+    It starts in seconds, and when it crashes its process exits, so systemd restarts it.
+
+new.imsss.net ran the development server until October 28, 2026, and now runs a production build.
+On your own computer, `make frontend-start` still runs the development server.
 See {doc}`../how-to-guides/switch-frontend-to-production`.
