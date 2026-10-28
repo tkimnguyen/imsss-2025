@@ -38,6 +38,8 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `backend/instance/var/blobs/` | Uploaded image and file contents |
 | `backend/instance/var/filestorage-orig/`, `blobs-orig/` | Older copies of the database, kept from setup |
 | `frontend/volto.config.js` | Volto add-on and theme configuration |
+| `/home/plone/backups/` | Daily database and blob backups, readable only by `plone`; see "Backups" below |
+| `/home/plone/bin/imsss-backup.sh` | Script that makes those backups |
 | `/swapfile` | 2 GB swap file, listed in `/etc/fstab` |
 | `/etc/ssh/sshd_config.d/00-imsss.conf` | Turns off password logins over SSH; see below |
 | `/etc/fail2ban/jail.d/imsss.local` | fail2ban settings for the SSH jail; see below |
@@ -45,6 +47,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `/etc/systemd/system/imsss-backend.service` | Backend service unit |
 | `/etc/systemd/system/imsss-frontend.service` | Frontend service unit |
 | `/etc/systemd/system/imsss-frontend.service.d/override.conf` | Drop-in that runs the production build of the frontend |
+| `/etc/systemd/system/imsss-backup.service`, `imsss-backup.timer` | Runs the backup script daily at 21:30 UTC |
 | `/etc/imsss-frontend.env` | Settings for building and running the production build of the frontend |
 | `frontend/core/packages/volto/build/` | The production build of the frontend; `build/BUILD_COMMIT` names the commit it was built from, for builds made in CI |
 | `frontend/core/packages/volto/build.prev/` | The previous build, kept by `devops/scripts/deploy.sh` so a deploy can go back to it |
@@ -308,4 +311,21 @@ Keep these limits in mind:
 - The disk is copied while the site runs.
   The ZODB only appends to `Data.fs`, so a copy is normally usable, but the last transaction or two may be missing.
 
-For how to restore, and for keeping database backups longer than two weeks, see {doc}`../how-to-guides/back-up-and-restore`.
+The server also backs up the site's content itself, every day at 21:30 UTC, before the Linode backup window.
+`imsss-backup.timer` runs `/home/plone/bin/imsss-backup.sh` as `plone`, which writes to `/home/plone/backups/`:
+
+- `filestorage/`: `repozo` backups of `Data.fs`, full on Sundays and incremental on other days
+- `blobs/`: a dated archive of the blobs folder each day
+
+It keeps 30 days of restore points.
+`repozo` copies only complete transactions, so each Linode backup also contains a consistent copy of the database from less than an hour earlier.
+These backups are small: about 6 MB for a full database backup and 42 MB for each blob archive in October 2026.
+They were set up on October 28, 2026, and a test restore matched the live database.
+
+```shell
+systemctl list-timers imsss-backup.timer                # when the next backup runs
+journalctl -u imsss-backup.service -n 20 --no-pager     # output of the last backups
+sudo ls -lh /home/plone/backups/filestorage /home/plone/backups/blobs
+```
+
+For how to restore from either kind of backup, see {doc}`../how-to-guides/back-up-and-restore`.

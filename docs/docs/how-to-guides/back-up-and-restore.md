@@ -23,9 +23,9 @@ A `Data.fs` restored without its matching blobs shows broken images.
 
 The Linode Backup Service backs up the server's whole disk, keeping about two weeks of backups.
 See the "Backups" section of {doc}`../reference/server` for what it covers.
-The `repozo` backups described later in this guide are optional.
-They keep database backups for longer than two weeks, and they can restore only the database instead of the whole disk.
-As of October 28, 2026, they aren't set up.
+The server also makes its own daily `repozo` backups of the database and blobs, set up on October 28, 2026, as described in "Schedule a daily database backup" below.
+They keep 30 days of restore points, and they can restore only the content instead of the whole disk.
+They're on the server's disk, so to keep them if the server is lost, copy them off now and then, as described below.
 
 ## Restore from a Linode backup
 
@@ -75,11 +75,17 @@ Add `-F` to the `repozo` command to force a full backup instead of an incrementa
 
 ## Schedule a daily database backup
 
-1.  Save this script as `/home/plone/bin/imsss-backup.sh` and make it executable with `chmod +x`.
+The server already has this set up.
+Use these steps to set it up again, for example on a new server.
+
+1.  Save this script as `/home/plone/bin/imsss-backup.sh`, owned by `plone`, and make it executable with `chmod +x`.
 
     ```shell
     #!/bin/sh
+    # Back up the IMSSS Plone database and blobs to ~/backups.
+    # Run daily by imsss-backup.timer, before the Linode backup window.
     set -eu
+    umask 077
     BACKEND=/home/plone/imsss.net-plone-6.1.3/imsss-2025/backend
     DEST=/home/plone/backups
     mkdir -p "$DEST/filestorage" "$DEST/blobs"
@@ -92,9 +98,13 @@ Add `-F` to the `repozo` command to force a full backup instead of an incrementa
 
     tar -czf "$DEST/blobs/blobs-$(date +%Y%m%d).tar.gz" -C "$BACKEND/instance/var" blobs
 
-    # Keep 30 days of backups
-    find "$DEST/filestorage" "$DEST/blobs" -type f -mtime +30 -delete
+    # Keep 30 days of restore points. Database files are kept a week longer,
+    # so the oldest incremental backups still have their full backup.
+    find "$DEST/filestorage" -type f -mtime +37 -delete
+    find "$DEST/blobs" -type f -mtime +30 -delete
     ```
+
+    `umask 077` makes the backups readable only by `plone`, because the database includes password hashes.
 
 2.  Create `/etc/systemd/system/imsss-backup.service`.
 
@@ -105,17 +115,20 @@ Add `-F` to the `repozo` command to force a full backup instead of an incrementa
     [Service]
     Type=oneshot
     User=plone
+    Nice=10
+    IOSchedulingClass=idle
     ExecStart=/home/plone/bin/imsss-backup.sh
     ```
 
 3.  Create `/etc/systemd/system/imsss-backup.timer`.
+    The Linode backup window starts at about 22:12 UTC, so this time puts a fresh backup in each Linode backup.
 
     ```ini
     [Unit]
-    Description=Daily IMSSS backup
+    Description=Daily IMSSS backup, before the Linode backup window
 
     [Timer]
-    OnCalendar=*-*-* 03:30:00
+    OnCalendar=*-*-* 21:30:00 UTC
     Persistent=true
 
     [Install]
@@ -129,13 +142,19 @@ Add `-F` to the `repozo` command to force a full backup instead of an incrementa
     sudo systemctl enable --now imsss-backup.timer
     sudo systemctl start imsss-backup.service
     journalctl -u imsss-backup.service -n 20 --no-pager
-    ls -lh ~/backups/filestorage ~/backups/blobs
+    sudo ls -lh /home/plone/backups/filestorage /home/plone/backups/blobs
     ```
 
-```{important}
-Backups stored on the same disk don't protect against losing the server.
-Copy `~/backups` to another machine regularly, for example from your own computer with `rsync -a plone@new.imsss.net:backups/ ~/imsss-backups/`.
+````{important}
+Backups stored on the same disk don't protect against losing the server, and the Linode backups keep only about two weeks.
+To keep a longer history somewhere else, copy the backups to another machine now and then, for example from your own computer:
+
+```shell
+rsync -a plone@new.imsss.net:backups/ ~/imsss-backups/
 ```
+
+They're small enough, about 50 MB a day, to keep many months.
+````
 
 ## Restore from a database backup
 
