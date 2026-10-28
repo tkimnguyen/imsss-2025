@@ -15,7 +15,7 @@
 | Frontend | `imsss-frontend.service` runs a **production build** of Volto 18.29.1 with `pnpm start:prod`, listening on `127.0.0.1:3000`. Its settings are in `/etc/imsss-frontend.env`. |
 | Web server | nginx, configured in `/etc/nginx/sites-enabled/plone.conf`. It terminates TLS, sends `/++api++` and `/robots.txt` to the backend (rewritten through the Virtual Host Monster to `/Plone`), and sends everything else to the frontend. HTTP redirects to HTTPS. |
 | TLS certificate | Let's Encrypt, managed by the certbot snap. `snap.certbot.renew.timer` renews it automatically. |
-| Firewall | `ufw` allows only SSH (22) and HTTP/HTTPS (80, 443) from outside. |
+| Firewall | `ufw` allows only SSH (22) and HTTP/HTTPS (80, 443) from outside. fail2ban bans addresses that repeatedly fail SSH logins. |
 | Backups | **None are configured.** `Data.fs` and `blobs` exist only on the server's disk. |
 
 The systemd unit files live in `/etc/systemd/system/` on the server and are not in this repository.

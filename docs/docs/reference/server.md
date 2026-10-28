@@ -22,6 +22,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 | SSH user for the site | `plone` |
 | Docker | Not installed |
 | Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026 |
+| SSH protection | fail2ban bans addresses that keep failing to log in over SSH; set up on October 28, 2026 |
 
 ## Paths
 
@@ -37,6 +38,8 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `backend/instance/var/filestorage-orig/`, `blobs-orig/` | Older copies of the database, kept from setup |
 | `frontend/volto.config.js` | Volto add-on and theme configuration |
 | `/swapfile` | 2 GB swap file, listed in `/etc/fstab` |
+| `/etc/fail2ban/jail.d/imsss.local` | fail2ban settings for the SSH jail; see below |
+| `/etc/systemd/journald.conf.d/size.conf` | Limits the systemd journal to 200 MB (`SystemMaxUse=200M`) |
 | `/etc/systemd/system/imsss-backend.service` | Backend service unit |
 | `/etc/systemd/system/imsss-frontend.service` | Frontend service unit |
 | `/etc/systemd/system/imsss-frontend.service.d/override.conf` | Drop-in that runs the production build of the frontend |
@@ -52,9 +55,9 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 
 The `backend/instance/` folder is generated during installation and isn't in git.
 
-Other folders in `/home/plone` are left over from earlier work and aren't used by the live site.
-`~/imsss.net` is a checkout of the older `tkimnguyen/imsss.net` repository, with uncommitted changes.
-`~/imsss.net-migration-20251014` holds migration archives.
+On October 28, 2026, folders left over from earlier work were removed to free disk space: `~/imsss.net` (a checkout of the older `tkimnguyen/imsss.net` site), `~/clean-test-plone-6.1.3`, `~/imsss.net-migration-20251014`, and `/root/imsss.net migration 20251014` (the database and blobs from before the migration to this site).
+A copy of the old site's data and uncommitted files, and of the pre-migration database and blobs, was kept off the server first.
+Caches, an unused Node.js version, old snap revisions, and failed-login logs were also removed, and the journal was limited to 200 MB.
 
 ## Services
 
@@ -173,7 +176,26 @@ journalctl -u imsss-frontend.service -f                 # follow frontend output
 journalctl -u imsss-backend.service -n 100 --no-pager
 sudo tail -f /var/log/nginx/new.imsss.net.error.log
 ss -ltn | grep -E ':3000|:8080'                         # check both apps are listening
+sudo fail2ban-client status sshd                        # addresses currently banned from SSH
 ```
+
+## fail2ban
+
+fail2ban watches the SSH log and bans, through the firewall, any address that fails to log in 5 times within 10 minutes.
+A ban lasts an hour at first, and gets longer each time the same address is banned again, up to a week.
+The settings are in `/etc/fail2ban/jail.d/imsss.local`.
+
+`ignoreip` in that file lists addresses that are never banned: the server itself, and the maintainer's address as of October 28, 2026.
+Update it if that address changes.
+
+To see or lift bans:
+
+```shell
+sudo fail2ban-client status sshd
+sudo fail2ban-client set sshd unbanip ADDRESS
+```
+
+If you're banned yourself, log in from another address or through the hosting provider's web console, then lift the ban.
 
 ## Reach the apps from your computer
 
