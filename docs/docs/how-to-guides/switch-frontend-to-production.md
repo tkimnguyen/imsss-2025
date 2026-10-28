@@ -44,17 +44,50 @@ Running a production build instead:
   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
   ```
 
-## 1. Build the frontend
+## 1. Create the settings file
+
+Volto reads some `RAZZLE_*` settings when it builds and others when it starts, so the build and the service must both use the same values.
+Keep them in one file, `/etc/imsss-frontend.env`:
+
+```ini
+RAZZLE_PUBLIC_URL=https://new.imsss.net
+RAZZLE_INTERNAL_API_PATH=http://localhost:8080/Plone
+```
+
+`RAZZLE_PUBLIC_URL`
+:   The site's public address, used in links such as those in `robots.txt` and the sitemap.
+
+`RAZZLE_INTERNAL_API_PATH`
+:   Where the frontend fetches content while rendering pages on the server.
+    Pointing it straight at the backend over plain HTTP avoids a round trip through `https://new.imsss.net`.
+    That round trip is the likely source of the HTTPS errors that preceded the October 27, 2026, outage.
+
+## 2. Build the frontend
+
+In production, Volto looks up the site's add-ons from its own folder, `frontend/core/packages/volto`, when it starts.
+`frontend/.npmrc` hoists the `@kitconcept/*` and `@eeacms/*` add-ons, which include the theme, into `frontend/node_modules` so that Volto can find them.
+Without that, the production server fails at startup with `Cannot find module '@kitconcept/volto-light-theme'`.
+
+The first `pnpm install` after the hoisting rules change rebuilds `node_modules` from scratch, which takes a few minutes.
+The development server can't run while that happens, so stop the frontend first.
+Then reinstall and build as `plone`, with the settings loaded:
 
 ```shell
-cd ~/imsss.net-plone-6.1.3/imsss-2025/frontend
 sudo systemctl stop imsss-frontend.service
+cd ~/imsss.net-plone-6.1.3/imsss-2025/frontend
+pnpm install --config.confirmModulesPurge=false
+set -a; . /etc/imsss-frontend.env; set +a
 pnpm build
 ```
 
-The build writes its output to `frontend/core/packages/volto/build/`.
+`--config.confirmModulesPurge=false` lets pnpm rebuild `node_modules` without asking for confirmation.
+Later installs don't need it.
 
-## 2. Change the service to run the build
+The build writes its output to `frontend/core/packages/volto/build/`.
+The development server also writes to that folder, so always rebuild before starting in production mode.
+Otherwise the service runs the development server's output.
+
+## 3. Change the service to run the build
 
 Open an override file for the frontend unit:
 
@@ -66,30 +99,27 @@ Add these lines, then save:
 
 ```ini
 [Service]
+EnvironmentFile=/etc/imsss-frontend.env
 Environment="NODE_ENV=production"
-Environment="RAZZLE_PUBLIC_URL=https://new.imsss.net"
-Environment="RAZZLE_INTERNAL_API_PATH=http://localhost:8080/Plone"
 ExecStart=
 ExecStart=/home/plone/.nvm/versions/node/v22.21.1/bin/pnpm start:prod
 ExecStartPost=/bin/sh -c 'until curl -fsS -o /dev/null http://127.0.0.1:3000/; do sleep 2; done'
 TimeoutStartSec=120
 ```
 
-The empty `ExecStart=` line removes the development-server command before adding the new one.
+`systemctl edit` saves the lines in `/etc/systemd/system/imsss-frontend.service.d/override.conf` and leaves the original unit file unchanged.
 
-`RAZZLE_PUBLIC_URL`
-:   The site's public address, used in links such as those in `robots.txt` and the sitemap.
+`EnvironmentFile`
+:   Loads the same settings that the build used.
 
-`RAZZLE_INTERNAL_API_PATH`
-:   Where the frontend fetches content while rendering pages on the server.
-    Pointing it straight at the backend over plain HTTP avoids a round trip through `https://new.imsss.net`.
-    That round trip is the likely source of the HTTPS errors that preceded the October 27, 2026, outage.
+`ExecStart`
+:   The empty `ExecStart=` line removes the development-server command before adding the new one.
 
 `ExecStartPost`
 :   Makes `systemctl start` and `systemctl restart` wait until the frontend serves a page.
     If it doesn't within `TimeoutStartSec`, the start fails and `systemctl status` shows an error.
 
-## 3. Start the service and check the site
+## 4. Start the service and check the site
 
 ```shell
 sudo systemctl daemon-reload
@@ -112,6 +142,7 @@ cd /home/plone/imsss.net-plone-6.1.3/imsss-2025
 git pull --ff-only
 cd frontend
 sudo systemctl stop imsss-frontend.service
+set -a; . /etc/imsss-frontend.env; set +a
 pnpm build
 sudo systemctl start imsss-frontend.service   # waits until the site responds
 echo "Deployed $(git log --oneline -1)"

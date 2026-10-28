@@ -40,6 +40,8 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
 | `/root/plone.conf.bak-20261028` | Copy of the nginx site configuration from before the `robots.txt` rule was added; safe to delete |
+| `/etc/imsss-frontend.env` | `RAZZLE_PUBLIC_URL` and `RAZZLE_INTERNAL_API_PATH` for a production build of the frontend. Created on October 28, 2026, for {doc}`../how-to-guides/switch-frontend-to-production`. The current development-server unit doesn't read it. |
+| `/home/plone/frontend-build-20261028.log` | Output of the first production build, on October 28, 2026; safe to delete |
 
 The `backend/instance/` folder is generated during installation and isn't in git.
 
