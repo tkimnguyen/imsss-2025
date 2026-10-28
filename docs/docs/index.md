@@ -9,14 +9,12 @@ myst:
 
 # IMSSS 2025
 
-Welcome to the documentation for IMSSS 2025!
-A new project using Plone 6.
+Welcome to the documentation for IMSSS 2025, the {term}`Plone` 6 website of the IMSSS, published at [new.imsss.net](https://new.imsss.net).
 
-This scaffold provides a ready-to-use environment for creating comprehensive documentation for {term}`Plone` projects, based on {term}`Plone Sphinx Theme`.
+The site has a Plone 6.1 backend and a Volto 18 frontend themed with `@kitconcept/volto-light-theme` and the `volto-imsss-2025` add-on.
+For how the live site is deployed and run on its server, see the [DevOps README](https://github.com/tkimnguyen/imsss-2025/blob/main/devops/README.md#how-newimsssnet-is-deployed-today).
 
-Built with Markedly Structured Text ({term}`MyST`), this environment supports rich formatting, directives, and extensions tailored for technical documentation.
-
-It's structured following the [Diátaxis](https://diataxis.fr/) documentation framework.
+This documentation is written in Markedly Structured Text ({term}`MyST`), uses the {term}`Plone Sphinx Theme`, and follows the [Diátaxis](https://diataxis.fr/) documentation framework.
 
 ```{toctree}
 :caption: How to guides

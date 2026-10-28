@@ -75,13 +75,23 @@ make stack-start
 
 And... you're all set! Your Plone site is up and running locally! 🚀
 
+## Deployment 🚢
+
+The live site, [new.imsss.net](https://new.imsss.net), runs from a git checkout of this repository on the server.
+The backend and frontend run as two systemd services behind nginx.
+It does not use the Docker stack in `devops/`.
+
+See [How new.imsss.net is deployed today](./devops/README.md#how-newimsssnet-is-deployed-today) for the server layout, how to deploy a change, and how to check logs.
+
+The CI workflow builds Docker images to `ghcr.io/tkimnguyen/imsss-2025-frontend` and `ghcr.io/tkimnguyen/imsss-2025-backend`, but the live site does not use them.
+
 ## Project structure 🏗️
 
 This monorepo consists of the following distinct sections:
 
 - **backend**: Houses the API and Plone installation, utilizing pip instead of buildout, and includes a policy package named imsss_2025.
 - **frontend**: Contains the React (Volto) package.
-- **devops**: Encompasses Docker stack, Ansible playbooks, and cache settings.
+- **devops**: Encompasses Docker stack, Ansible playbooks, and cache settings from the project template. These are not used by the live site yet. See [Deployment](#deployment-).
 - **docs**: Scaffold for writing documentation for your project.
 
 ### Why this structure? 🤔
@@ -111,9 +121,9 @@ make format
 | --- | --- | --- | --- |
 | backend | Ruff | Python code formatting, imports sorting  | [`backend/pyproject.toml`](./backend/pyproject.toml) |
 | backend | `zpretty` | XML and ZCML formatting  | -- |
-| frontend | ESLint | Fixes most common frontend issues | [`frontend/.eslintrc.js`](.frontend/.eslintrc.js) |
-| frontend | prettier | Format JS and Typescript code  | [`frontend/.prettierrc`](.frontend/.prettierrc) |
-| frontend | Stylelint | Format Styles (css, less, sass)  | [`frontend/.stylelintrc`](.frontend/.stylelintrc) |
+| frontend | ESLint | Fixes most common frontend issues | [`frontend/.eslintrc.js`](./frontend/.eslintrc.js) |
+| frontend | prettier | Format JS and Typescript code  | [`frontend/.prettierrc`](./frontend/.prettierrc) |
+| frontend | Stylelint | Format Styles (css, less, sass)  | [`frontend/.stylelintrc`](./frontend/.stylelintrc) |
 
 Formatters can also be run within the `backend` or `frontend` folders.
 
@@ -130,9 +140,9 @@ make lint
 | backend | Pyroma | Checks Python package metadata  | -- |
 | backend | check-python-versions | Checks Python version information  | -- |
 | backend | `zpretty` | Checks XML and ZCML formatting  | -- |
-| frontend | ESLint | Checks JS / Typescript lint | [`frontend/.eslintrc.js`](.frontend/.eslintrc.js) |
-| frontend | prettier | Check JS / Typescript formatting  | [`frontend/.prettierrc`](.frontend/.prettierrc) |
-| frontend | Stylelint | Check Styles (css, less, sass) formatting  | [`frontend/.stylelintrc`](.frontend/.stylelintrc) |
+| frontend | ESLint | Checks JS / Typescript lint | [`frontend/.eslintrc.js`](./frontend/.eslintrc.js) |
+| frontend | prettier | Check JS / Typescript formatting  | [`frontend/.prettierrc`](./frontend/.prettierrc) |
+| frontend | Stylelint | Check Styles (css, less, sass) formatting  | [`frontend/.stylelintrc`](./frontend/.stylelintrc) |
 
 Linters can be run individually within the `backend` or `frontend` folders.
 
