@@ -10,7 +10,8 @@ myst:
 # GitHub Actions workflows
 
 The workflows live in `.github/workflows/`.
-None of them deploys to the live site, which is updated by hand.
+None of them changes the live site.
+The `production-build` job builds the frontend for it, and `devops/scripts/deploy.sh`, run on the server, deploys that build.
 See the deployment section of `devops/README.md`.
 
 ## Main workflow (`main.yml`)

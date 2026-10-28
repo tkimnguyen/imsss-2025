@@ -18,6 +18,7 @@ All of the site's content lives in two places on the server:
 :   The contents of uploaded images and files.
 
 Both paths are relative to the checkout at `/home/plone/imsss.net-plone-6.1.3/imsss-2025`.
+If the whole server is lost, see {doc}`recover-the-server` instead.
 A backup must include both, taken at about the same time.
 A `Data.fs` restored without its matching blobs shows broken images.
 
@@ -135,7 +136,7 @@ Use these steps to set it up again, for example on a new server.
     WantedBy=timers.target
     ```
 
-4.  Enable the timer, run the backup once by hand, and check the result.
+4.  As root, enable the timer, run the backup once by hand, and check the result.
 
     ```shell
     sudo systemctl daemon-reload
@@ -235,6 +236,8 @@ To stop the copies, run `launchctl bootout gui/$(id -u)/net.imsss.backup-pull` a
 To restore from the Mac's copy, copy the files back to `/home/plone/backups` on the server, or point `repozo -R -r` at a folder holding them.
 
 ## Restore from a database backup
+
+`plone` can't use `sudo`, so run the `sudo` commands in a second SSH session as root, and the others as `plone`.
 
 1.  Stop the backend.
 

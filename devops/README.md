@@ -56,7 +56,8 @@ Visitors with the site already open may need to reload the page to get the new v
 
 The script reads a GitHub token from `/etc/imsss-deploy.env`, as `GITHUB_TOKEN=...`.
 Use a fine-grained personal access token for `tkimnguyen/imsss-2025` only, with read access to Actions.
-Keep the file owned by root with mode 600, and renew the token before it expires.
+Keep the file owned by root with mode 600.
+The current token was created on October 28, 2026, and expires on December 27, 2026, so renew it before then.
 
 #### Backend configuration changes
 
@@ -67,7 +68,8 @@ Compare the change with the server's `zope.conf`, apply it by hand, commit any r
 #### Build on the server instead
 
 Building the frontend needs about 3 GB of memory.
-On a server with enough memory, you can still build it there, with the frontend stopped for the few minutes the build takes:
+On a server with enough memory, you can still build it there, with the frontend stopped for the few minutes the build takes.
+`plone` can't use `sudo`, so run the `sudo` commands in a second SSH session as root, and the others as `plone`.
 
 ```shell
 sudo systemctl stop imsss-frontend.service
@@ -79,6 +81,8 @@ sudo systemctl start imsss-frontend.service
 
 ### Check status and logs
 
+Run these as root.
+
 ```shell
 systemctl status imsss-frontend.service imsss-backend.service nginx
 journalctl -u imsss-frontend.service -n 100 --no-pager    # frontend output and errors
@@ -86,7 +90,12 @@ journalctl -u imsss-backend.service -n 100 --no-pager     # backend output and e
 sudo tail -n 50 /var/log/nginx/new.imsss.net.error.log
 ss -ltn | grep -E ':3000|:8080'                           # are both apps listening?
 sudo ufw status                                           # firewall rules
+sudo fail2ban-client status sshd                          # addresses banned from SSH
+systemctl list-timers imsss-backup.timer                  # when the next content backup runs
+journalctl -u imsss-backup.service -n 20 --no-pager       # output of the last backups
 ```
+
+On the maintainer's Mac, `~/imsss-backups/pull.log` shows the daily copies of those backups.
 
 If the frontend crashes, systemd restarts it after 5 seconds.
 If the site keeps returning `502 Bad Gateway`, see the "Fix a 502 Bad Gateway error" guide in `docs/`.

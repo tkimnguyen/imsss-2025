@@ -34,7 +34,9 @@ Running a production build instead:
   ```
 
 - The build can use about 3 GB of memory.
-  The server has 3.8 GB of RAM and only 512 MB of swap, and the development server uses about 2 GB, so you'll stop the frontend while building.
+  At the time of the switch, the server had 3.8 GB of RAM and only 512 MB of swap, and the development server used about 2 GB, so the frontend was stopped while building.
+  A 2 GB swap file has been added since.
+  On a server with less memory, use the build from CI instead of building on the server.
   The site is down for the few minutes the build takes.
   Adding swap makes the build more reliable; see the swap section of {doc}`../reference/server`.
 
@@ -70,7 +72,8 @@ Without that, the production server fails at startup with `Cannot find module '@
 
 The first `pnpm install` after the hoisting rules change rebuilds `node_modules` from scratch, which takes a few minutes.
 The development server can't run while that happens, so stop the frontend first.
-Then reinstall and build as `plone`, with the settings loaded:
+Then reinstall and build as `plone`, with the settings loaded.
+`plone` can't use `sudo`, so run the `sudo` commands in a second SSH session as root, and the others as `plone`.
 
 ```shell
 sudo systemctl stop imsss-frontend.service

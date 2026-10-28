@@ -52,7 +52,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `frontend/core/packages/volto/build/` | The production build of the frontend; `build/BUILD_COMMIT` names the commit it was built from, for builds made in CI |
 | `frontend/core/packages/volto/build.prev/` | The previous build, kept by `devops/scripts/deploy.sh` so a deploy can go back to it |
 | `frontend/core/packages/volto/build.new/`, `build.failed/` | Left by `deploy.sh` only if a deploy stopped part-way, or a new build failed to start; safe to delete |
-| `/etc/imsss-deploy.env` | GitHub token that `deploy.sh` uses to download builds from CI, as `GITHUB_TOKEN=...`; owned by root, mode 600. A fine-grained token with read access to Actions on `tkimnguyen/imsss-2025` only, created on October 28, 2026. Renew it before it expires. |
+| `/etc/imsss-deploy.env` | GitHub token that `deploy.sh` uses to download builds from CI, as `GITHUB_TOKEN=...`; owned by root, mode 600. A fine-grained token with read access to Actions on `tkimnguyen/imsss-2025` only, created on October 28, 2026, and expiring on December 27, 2026. Renew it before then. |
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
 | `/root/plone.conf.bak-20261028` | Copy of the nginx site configuration from before the `robots.txt` rule was added; safe to delete |
@@ -158,7 +158,9 @@ Port 443
     - Everything else goes to the frontend.
 
 Port 80
-:   Redirects `new.imsss.net` to HTTPS and returns `404` for any other host name.
+:   Redirects `new.imsss.net` to HTTPS.
+
+`/etc/nginx/sites-enabled/` also links to nginx's `default` site, so a request on port 80 for any other host name, or for the server's IP address, gets the "Welcome to nginx!" page.
 
 ## HTTPS certificate
 
@@ -200,7 +202,10 @@ So this file overrides the main file, which still contains the Ubuntu defaults.
 
 To give someone access, add their public key to `~/.ssh/authorized_keys` for `plone` or `root`.
 `plone`'s file also has a key that can only read the backups, used to copy them off the server; see {doc}`../how-to-guides/back-up-and-restore`.
-Account passwords still work for `sudo` and the hosting provider's web console, but not over SSH.
+Account passwords still work in the hosting provider's web console, but not over SSH.
+
+`plone` isn't in the `sudo` group.
+Commands in these docs that start with `sudo` need root: run them in an SSH session as `root`, where they work with or without `sudo`.
 
 Before changing these settings, keep an SSH session open, then check the configuration and reload:
 

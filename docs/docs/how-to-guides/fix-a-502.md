@@ -12,10 +12,10 @@ myst:
 nginx returns `502 Bad Gateway` when the app it forwards a request to isn't answering.
 The frontend handles every page and the backend handles `/++api++`, so a 502 on every page almost always means the frontend.
 
-Run the commands in this guide on the server as `plone`.
+Run the commands in this guide on the server as root.
 
 ```shell
-ssh plone@new.imsss.net
+ssh root@new.imsss.net
 ```
 
 ## 1. Find which app isn't listening
@@ -67,7 +67,24 @@ sudo systemctl restart imsss-frontend.service
 
 The command waits until the frontend serves a page, which takes about 5 seconds.
 If the frontend doesn't respond within 120 seconds, the command fails, and `systemctl status` shows why.
-If it keeps failing after a deploy, rebuild the frontend as described in the deployment section of `devops/README.md`.
+If it started failing after a deploy, go back to the previous build, as in the next section.
+
+## If a deploy caused it
+
+`devops/scripts/deploy.sh` keeps the build it replaced in `frontend/core/packages/volto/build.prev/`.
+If a new build doesn't start, the script goes back to that build by itself.
+If the new build starts but fails later, go back by hand, as root:
+
+```shell
+cd /home/plone/imsss.net-plone-6.1.3/imsss-2025/frontend/core/packages/volto
+rm -rf build.failed
+mv build build.failed && mv build.prev build
+systemctl restart imsss-frontend.service
+```
+
+The next run of `deploy.sh` deploys the build of the newest commit that changed the frontend, which is the failed one until a fix is pushed.
+So fix the problem in the repository first, wait for CI to pass, and then deploy again.
+Delete `build.failed` once the fix is deployed.
 
 ## 4. Check the site from outside
 
@@ -109,10 +126,14 @@ Also open the site in a browser without an SSH tunnel, for example on your phone
     Delete it once you no longer need to undo the change.
 
 `Can't resolve '.../packages/volto-imsss-2025/src/theme/...'`
-:   A file that the theme's SCSS refers to is missing from the checkout.
-    Check `git status` on the server; the file may have been deleted or not yet pulled.
+:   A file that the theme's SCSS refers to is missing.
+    The development server shows this error while it runs, which is how it reached the live site before October 28, 2026.
+    The production build reads the theme's files only while it's built, so now the error makes the `production-build` job in CI fail instead, and `deploy.sh` has no build to deploy.
+    Add the missing file, or remove the reference to it, and push.
 
 `Cannot find module '@kitconcept/volto-light-theme'` at startup
 :   Volto can't find the site's add-ons from its own folder.
-    Check that `frontend/.npmrc` hoists `@kitconcept/*` and `@eeacms/*`, then run `pnpm install` and `pnpm build` in `frontend/`.
+    `deploy.sh` goes back to the previous build when this happens.
+    Check that `frontend/.npmrc` hoists `@kitconcept/*` and `@eeacms/*`.
+    If it doesn't, fix it in the repository and deploy again: `deploy.sh` reinstalls the frontend dependencies when `.npmrc` changes.
     See {doc}`switch-frontend-to-production`.

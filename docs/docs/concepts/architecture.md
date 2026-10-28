@@ -57,7 +57,31 @@ All content is stored in the ZODB, an object database, in two parts:
 
 There is no separate database server.
 Backing up the site means backing up these two parts together.
-See {doc}`../how-to-guides/back-up-and-restore`.
+
+## Where the backups are kept
+
+The content is backed up in three places, each covering a different kind of loss.
+
+```{mermaid}
+flowchart LR
+    live[("Data.fs + blobs")] -- "daily, 21:30 UTC" --> local["/home/plone/backups<br/>30 days"]
+    local -- "whole disk, daily" --> linode["Linode Backup Service<br/>about 2 weeks"]
+    local -- "rsync, daily" --> mac["Maintainer's Mac<br/>months to years, thinned"]
+```
+
+Backups on the server
+:   `repozo` backups of the database and an archive of the blobs, made every day.
+    They're the quickest to restore from, for a content mistake, but they're lost with the server.
+
+Linode backups
+:   Copies of the whole disk, kept by Linode outside the server.
+    They bring back the whole server, including its configuration, but only from the last two weeks.
+
+The Mac's copy
+:   The server's backups, copied every day with a key that can only read them.
+    It keeps a thinned history, and it's outside Linode, so it survives losing the Linode account too.
+
+See {doc}`../how-to-guides/back-up-and-restore` and {doc}`../how-to-guides/recover-the-server`.
 
 ## Where the code and theme live
 
@@ -70,6 +94,28 @@ This repository holds both applications.
 
 The server runs a git checkout of this repository.
 For the details of the server and its services, see {doc}`../reference/server`.
+
+## How a change reaches the site
+
+The server doesn't build the frontend, because a build needs about 3 GB of memory.
+CI builds it instead, and a script on the server deploys that build.
+
+```{mermaid}
+flowchart LR
+    push["Push to main"] --> ci["CI: lint and test,<br/>then production build"]
+    ci -- "artifact frontend-build-&lt;commit&gt;" --> gh[(GitHub)]
+    deploy["deploy.sh on the server"] -- "download" --> gh
+    deploy --> checkout["Update the checkout,<br/>swap builds, restart"]
+```
+
+1.  A push to `main` runs the CI workflow.
+    When the frontend changed and the checks pass, the `production-build` job builds the frontend at the same path as the server's checkout, and stores the build on GitHub for 90 days.
+2.  On the server, someone runs `devops/scripts/deploy.sh` as root.
+    It downloads the build for the newest commit that changed the frontend, updates the checkout, swaps in the new build, and restarts what changed.
+    If the new frontend doesn't start, the script goes back to the previous build.
+
+Backend changes need no build: `deploy.sh` installs any new Python dependencies and restarts the backend.
+See the deployment section of `devops/README.md` and {doc}`../reference/ci`.
 
 ## Development server and production build
 

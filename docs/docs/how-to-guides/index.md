@@ -23,6 +23,7 @@ https://diataxis.fr/how-to-guides/
 :maxdepth: 1
 
 back-up-and-restore
+recover-the-server
 fix-a-502
 switch-frontend-to-production
 work-with-a-copy-of-live-data
