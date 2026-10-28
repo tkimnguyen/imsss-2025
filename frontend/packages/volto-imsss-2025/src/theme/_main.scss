@@ -40,9 +40,8 @@
   overflow: hidden;
 
   /*
-   * The EEA Hero image wrapper collapses to zero
-   * height with our VLT layout unless we explicitly
-   * establish its height.
+   * The Hero image wrapper collapsed to zero height
+   * with the VLT layout, so establish its height.
    */
   .hero-block-image-wrapper {
     position: absolute;
@@ -60,8 +59,8 @@
   }
 
   /*
-   * Fill the Hero while favoring the upper portion
-   * of the artwork when cropping is necessary.
+   * Fill the Hero while keeping the interesting
+   * upper portion of the Fra Angelico artwork visible.
    */
   .hero-block-image {
     background-position: center top;
@@ -69,7 +68,7 @@
   }
 
   /*
-   * Keep Hero content above the image and dark overlay.
+   * Keep Hero content above the artwork and overlay.
    */
   .hero-block-inner-wrapper {
     position: relative;
@@ -78,7 +77,7 @@
   }
 
   /*
-   * Position Hero content over the lower portion
+   * Position Hero content over the lower part
    * of the artwork.
    */
   .hero-block-body {
@@ -94,8 +93,7 @@
 
   /*
    * VLT gives this nested default block group a white
-   * background. Keep it transparent inside the Hero
-   * so the artwork remains visible.
+   * background. Make it transparent inside the Hero.
    */
   .hero-block-text .blocks-group-wrapper.default {
     background: transparent;
@@ -121,8 +119,8 @@
 
   /*
    * VLT constrains the nested Hero text content to
-   * 620px. Use the same centered width for metadata
-   * so "Read more..." aligns with the heading.
+   * 620px. Match that width for "Read more..."
+   * so the link aligns with the heading.
    */
   .hero-block-meta {
     width: 620px;
@@ -143,15 +141,16 @@
       background: transparent !important;
       outline: none !important;
       box-shadow: none !important;
+
       text-decoration: underline;
       text-decoration-color: #fff;
     }
 
     /*
-     * Hover, keyboard focus, and active states.
+     * Hover, focus, and active states.
      *
-     * No box or outline. A slightly thicker underline
-     * provides the interaction feedback instead.
+     * No box or outline. Use a slightly thicker
+     * underline as the interaction cue.
      */
     a:hover,
     a:focus,
@@ -161,9 +160,179 @@
       background: transparent !important;
       outline: none !important;
       box-shadow: none !important;
+
       text-decoration: underline;
       text-decoration-color: #fff;
       text-decoration-thickness: 2px;
     }
   }
+}
+
+
+/* --------------------------------------------------
+ * Homepage feature cards
+ *
+ * Journal / Congress / News grid immediately
+ * following the Hero.
+ * -------------------------------------------------- */
+
+.eea.hero-block + .gridBlock {
+  margin-top: 70px;
+  margin-bottom: 70px;
+
+  /*
+   * Keep the three columns/card heights consistent.
+   */
+  .ui.grid > .column {
+    display: flex;
+  }
+
+  .block.teaser {
+    width: 100%;
+    margin: 0;
+
+    /*
+     * The parent card gets the IMSSS burgundy.
+     */
+    .card {
+      width: 100%;
+      min-height: 320px;
+
+      background-color: #762b29;
+      border: 0;
+      box-shadow: none;
+    }
+
+    /*
+     * VLT actually paints the visible contained-card
+     * surface on .card-inner. This is why setting only
+     * .card to burgundy did not initially show.
+     */
+    .card-inner {
+      height: 100%;
+      min-height: 320px;
+
+      background-color: #762b29;
+    }
+
+    /*
+     * Vertically center the feature-card content.
+     */
+    .card-summary {
+      display: flex;
+      min-height: 220px;
+      flex-direction: column;
+      justify-content: center;
+
+      padding: 36px;
+
+      background: transparent;
+    }
+
+    /*
+     * Actual VLT 7.8.6 markup uses:
+     *
+     * <h2 class="title">
+     *
+     * rather than .headline.
+     */
+    h2.title,
+    h2.title a {
+      color: #fff !important;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      text-transform: uppercase;
+    }
+
+    h2.title {
+      margin: 0 0 20px;
+      line-height: 1.1;
+    }
+
+    .description {
+      color: #fff !important;
+      font-family: Georgia, 'Times New Roman', serif;
+      line-height: 1.5;
+    }
+
+    /* --------------------------------------------------
+     * Homepage feature-card icons
+     * -------------------------------------------------- */
+
+    /*
+     * Turn VLT's empty image wrapper into an icon area.
+     */
+    .ui.grid > .column .block.teaser .image-wrapper {
+      display: block;
+      width: 100%;
+      height: 100px;
+
+      margin: 0;
+
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 58px 58px;
+    }
+
+    /*
+     * Journal
+     */
+    .ui.grid > .column:nth-child(1) .block.teaser .image-wrapper {
+      background-image: url('./icons/open_book.svg');
+    }
+
+    /*
+     * Congress
+     */
+    .ui.grid > .column:nth-child(2) .block.teaser .image-wrapper {
+      background-image: url('./icons/user_group.svg');
+    }
+
+    /*
+     * News
+     */
+    .ui.grid > .column:nth-child(3) .block.teaser .image-wrapper {
+      background-image: url('./icons/news.svg');
+    }
+  }
+
+  /* Middle feature card */
+  .ui.grid > .column:nth-child(2) {
+    .block.teaser {
+      .card,
+      .card-inner {
+        background-color: #f2efec;
+      }
+
+      h2.title,
+      h2.title a,
+      .description {
+        color: #762b29 !important;
+      }
+    }
+  }
+
+  .eea.hero-block + .gridBlock .image-wrapper {
+    display: block !important;
+    height: 100px !important;
+    min-height: 100px !important;
+    flex: 0 0 100px !important;
+
+    background-color: #5f211f;
+  }
+}
+
+/* --------------------------------------------------
+ * Floated images
+ *
+ * Left/right-aligned images float, so a tall photo
+ * can run past its own section. Start each new h2
+ * section (e.g. "Vice-President") and h3 entry
+ * (e.g. each person under "Councilors") below any float.
+ * -------------------------------------------------- */
+#page-document h2,
+#page-document h3,
+.block-editor-slate h2,
+.block-editor-slate h3 {
+  clear: both;
 }
