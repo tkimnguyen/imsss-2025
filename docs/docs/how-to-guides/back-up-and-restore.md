@@ -21,12 +21,40 @@ Both paths are relative to the checkout at `/home/plone/imsss.net-plone-6.1.3/im
 A backup must include both, taken at about the same time.
 A `Data.fs` restored without its matching blobs shows broken images.
 
-```{warning}
-As of October 2026, the server has no backups configured.
-Until you set up the scheduled backup below, the only copy of the site's content is on the server's disk.
-```
+The Linode Backup Service backs up the server's whole disk, keeping about two weeks of backups.
+See the "Backups" section of {doc}`../reference/server` for what it covers.
+The `repozo` backups described later in this guide are optional.
+They keep database backups for longer than two weeks, and they can restore only the database instead of the whole disk.
+As of October 28, 2026, they aren't set up.
 
-## Take a one-off backup
+## Restore from a Linode backup
+
+Restore to a new Linode first, rather than over the live server.
+You can then check the backup, or copy content from it, without touching the live site.
+
+1.  In Cloud Manager, open the Linode, select the {guilabel}`Backups` tab, and choose the backup to restore.
+2.  From its menu, choose {guilabel}`Deploy New Linode`, and pick a plan.
+    Linode bills the new Linode until you delete it.
+3.  Log in to the new Linode with SSH as `root`, using its IP address.
+    It accepts the same keys as the live server.
+4.  Check that the backend starts, and that the content is what you expect.
+
+    ```shell
+    systemctl status imsss-backend.service --no-pager
+    curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/Plone/++api++
+    ```
+
+    To browse the site, open an SSH tunnel to the new Linode's IP address, as described in {doc}`../reference/server`.
+    Check the content through the backend at `http://localhost:8080/Plone`, not the frontend.
+    The restored frontend is set up for `https://new.imsss.net`, so in a browser it loads content from the live site.
+
+5.  If you need only some content, export it from the new Linode, or copy `Data.fs` and `blobs` from it as described below.
+6.  Delete the new Linode when you're done.
+
+To replace the live server with the backup instead, choose {guilabel}`Restore to Existing Linode`.
+This overwrites the live server's disk, including any content added since the backup.
+
+## Take a one-off database backup
 
 Run these commands on the server as `plone`.
 The backend can keep running.
@@ -45,7 +73,7 @@ tar -czf ~/backups/blobs/blobs-$(date +%Y%m%d-%H%M).tar.gz -C instance/var blobs
 
 Add `-F` to the `repozo` command to force a full backup instead of an incremental one.
 
-## Schedule a daily backup
+## Schedule a daily database backup
 
 1.  Save this script as `/home/plone/bin/imsss-backup.sh` and make it executable with `chmod +x`.
 
@@ -109,7 +137,7 @@ Backups stored on the same disk don't protect against losing the server.
 Copy `~/backups` to another machine regularly, for example from your own computer with `rsync -a plone@new.imsss.net:backups/ ~/imsss-backups/`.
 ```
 
-## Restore from a backup
+## Restore from a database backup
 
 1.  Stop the backend.
 

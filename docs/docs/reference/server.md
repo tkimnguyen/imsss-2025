@@ -292,5 +292,20 @@ It doesn't change the live password, and the live password isn't stored in this 
 
 ## Backups
 
-None are configured.
-See {doc}`../how-to-guides/back-up-and-restore`.
+The server is a Linode, and the Linode Backup Service backs up its whole disk automatically.
+The backups are stored by Linode, outside the server.
+Linode keeps three: one from the last day, one about a week old, and one about two weeks old.
+As of October 28, 2026, the backups listed in Linode's Cloud Manager were from October 18, 25, and 28, each taken at 22:12 server time.
+
+To see them, open the Linode in Cloud Manager and select the {guilabel}`Backups` tab.
+
+Keep these limits in mind:
+
+- Nothing older than about two weeks is kept.
+  A mistake noticed later than that is in every backup.
+- A restore brings back the whole disk, not single files or pages.
+  For recent content mistakes, Plone's {guilabel}`History` and undo are quicker.
+- The disk is copied while the site runs.
+  The ZODB only appends to `Data.fs`, so a copy is normally usable, but the last transaction or two may be missing.
+
+For how to restore, and for keeping database backups longer than two weeks, see {doc}`../how-to-guides/back-up-and-restore`.
