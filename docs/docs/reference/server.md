@@ -18,7 +18,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 | --- | --- |
 | Host name | `new.imsss.net` |
 | Operating system | Ubuntu 24.04 LTS |
-| Resources | 2 vCPU, 3.8 GB RAM, 512 MB swap, 25 GB disk |
+| Resources | 2 vCPU, 3.8 GB RAM, 2.5 GB swap (512 MB partition and 2 GB `/swapfile`), 25 GB disk |
 | SSH user for the site | `plone` |
 | Docker | Not installed |
 | Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026 |
@@ -36,6 +36,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `backend/instance/var/blobs/` | Uploaded image and file contents |
 | `backend/instance/var/filestorage-orig/`, `blobs-orig/` | Older copies of the database, kept from setup |
 | `frontend/volto.config.js` | Volto add-on and theme configuration |
+| `/swapfile` | 2 GB swap file, listed in `/etc/fstab` |
 | `/etc/systemd/system/imsss-backend.service` | Backend service unit |
 | `/etc/systemd/system/imsss-frontend.service` | Frontend service unit |
 | `/etc/systemd/system/imsss-frontend.service.d/override.conf` | Drop-in that runs the production build of the frontend |
@@ -188,7 +189,7 @@ Don't run a local backend or frontend at the same time, because they use the sam
 
 ## Swap
 
-As of October 2026, the server has 512 MB of swap on a separate partition, `/dev/sdb`.
+The server has about 2.5 GB of swap: a 512 MB partition, `/dev/sdb`, and a 2 GB swap file, `/swapfile`, added on October 28, 2026, using the steps below.
 
 The running site needs about 700–800 MB of memory, including Ubuntu itself.
 On a server with 1 GB of memory, add a swap file so that occasional peaks, and reinstalling frontend dependencies during a deploy, don't run out of memory.
