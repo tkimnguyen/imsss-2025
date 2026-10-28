@@ -77,8 +77,10 @@ if [ "$FRONTEND_COMMIT" != "$DEPLOYED_BUILD" ]; then
 
     STAGING=$VOLTO/build.new
     rm -rf "$STAGING"
-    as_plone mkdir "$STAGING"
-    as_plone tar -xzf "$WORK/frontend-build.tar.gz" -C "$STAGING" --strip-components=1
+    mkdir "$STAGING"
+    # $WORK is readable only by root, so extract as root, then hand the build to plone.
+    tar -xzf "$WORK/frontend-build.tar.gz" -C "$STAGING" --strip-components=1 --no-same-owner
+    chown -R plone:plone "$STAGING"
     [ -f "$STAGING/server.js" ] || fail "the downloaded build has no server.js"
     [ "$(cat "$STAGING/BUILD_COMMIT")" = "$FRONTEND_COMMIT" ] || fail "the downloaded build is for a different commit"
 else
