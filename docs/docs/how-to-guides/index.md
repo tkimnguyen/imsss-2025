@@ -19,6 +19,16 @@ https://diataxis.fr/how-to-guides/
 ```
 
 
+```{toctree}
+:maxdepth: 1
+
+back-up-and-restore
+fix-a-502
+switch-frontend-to-production
+work-with-a-copy-of-live-data
+editing-images
+```
+
 ## Authors
 
 -   {doc}`plone:contributing/documentation/myst-reference`

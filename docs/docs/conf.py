@@ -92,6 +92,8 @@ linkcheck_ignore = [
     r"http://0.0.0.0",
     r"http://127.0.0.1",
     r"http://localhost",
+    # Ignore the live site, so that a docs build doesn't depend on it being up
+    r"https?://new\.imsss\.net",
     # Ignore file downloads
     r"^/_static/",
     # Ignore pages that require authentication
