@@ -23,7 +23,7 @@ A `config` job works out which parts of the repository changed and runs only the
 | Job | Runs when this changes | What it does |
 | --- | --- | --- |
 | `backend` (`backend.yml`) | `backend/` | Checks formatting, lint, XML and ZCML, package metadata, and Python versions; runs the tests and coverage; builds `backend/Dockerfile` and pushes `ghcr.io/tkimnguyen/imsss-2025-backend`. |
-| `frontend` (`frontend.yml`) | `frontend/` | Runs `make install`, `make lint`, `make ci-i18n`, and `make test`. If they pass, builds `frontend/Dockerfile`, which is a production Volto build, for `linux/amd64` and pushes `ghcr.io/tkimnguyen/imsss-2025-frontend`. |
+| `frontend` (`frontend.yml`) | `frontend/` | Runs `make install`, `make lint`, `make ci-i18n`, and `make test`. If they pass, builds `frontend/Dockerfile`, which is a production Volto build, for `linux/amd64` and pushes `ghcr.io/tkimnguyen/imsss-2025-frontend`. On pushes to `main`, the `production-build` job also builds the frontend for new.imsss.net; see below. |
 | `docs` (`docs.yml`) | `docs/` or `.readthedocs.yaml` | Checks links, builds the HTML documentation, and runs Vale style, grammar, and spelling checks. |
 | `Final report` | always | Writes a table of the job results to the run summary. |
 
@@ -47,6 +47,20 @@ cd frontend && make ci-i18n
 
 `make lint` in `frontend/` stops at the first failing tool, so a pass in ESLint can hide Prettier or Stylelint errors that follow.
 Run `pnpm prettier` and `pnpm stylelint` in `frontend/` to see every problem at once.
+
+### Frontend build for new.imsss.net
+
+The `production-build` job in `frontend.yml` builds the frontend that new.imsss.net runs, so that the server never has to.
+It runs only for pushes to `main`, after the code analysis passes.
+
+- It copies the checkout to `/home/plone/imsss.net-plone-6.1.3/imsss-2025`, the same path as on the server, and builds there.
+  The build embeds the absolute paths of the add-ons it was built with, so the paths must match.
+- It builds with the same `RAZZLE_*` settings as `/etc/imsss-frontend.env` on the server.
+  The values are set in the job's `env`, and must be kept in step with that file.
+- It writes the commit hash to `build/BUILD_COMMIT`, and uploads `build/` as `frontend-build.tar.gz` in an artifact named `frontend-build-<commit>`, kept for 90 days.
+
+`devops/scripts/deploy.sh` on the server downloads that artifact.
+Because the job runs only when the frontend changes, the script uses the build from the most recent commit that changed `frontend/` or `frontend.yml`.
 
 ## Varnish Image Creation (`varnish.yml`)
 

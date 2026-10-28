@@ -81,6 +81,69 @@ jobs:
           echo '| i18n | ${{ steps.i18n.conclusion == 'failure' && '❌' || ' ✅' }} |' >> $GITHUB_STEP_SUMMARY
           echo '| Unit Tests | ${{ steps.unit.conclusion == 'failure' && '❌' || ' ✅' }} |' >> $GITHUB_STEP_SUMMARY
 
+  production-build:
+    # Builds the frontend for new.imsss.net, which runs from a git checkout
+    # and doesn't have the memory to build it. devops/scripts/deploy.sh
+    # downloads the artifact this job uploads.
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    needs:
+      - code-analysis
+    permissions:
+      contents: read
+    env:
+      # Build at the same path as on the server: the build embeds the
+      # absolute paths of the add-ons it was built with.
+      SERVER_CHECKOUT: /home/plone/imsss.net-plone-6.1.3/imsss-2025
+      # Must match /etc/imsss-frontend.env on the server.
+      RAZZLE_PUBLIC_URL: https://new.imsss.net
+      RAZZLE_INTERNAL_API_PATH: http://localhost:8080/Plone
+      RAZZLE_BIND_ADDRESS: 127.0.0.1
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: Copy the checkout to the server's path
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo mkdir -p "$(dirname "$SERVER_CHECKOUT")"
+          sudo chown -R "$USER" /home/plone
+          cp -a "$GITHUB_WORKSPACE" "$SERVER_CHECKOUT"
+
+      - name: Use Node.js ${{ inputs.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Enable corepack
+        working-directory: ${{ env.SERVER_CHECKOUT }}/frontend
+        run: |
+          npm i -g corepack@latest
+          corepack enable
+
+      - name: Install dependencies
+        working-directory: ${{ env.SERVER_CHECKOUT }}/frontend
+        run: make install
+
+      - name: Build
+        working-directory: ${{ env.SERVER_CHECKOUT }}/frontend
+        run: |
+          pnpm build
+          echo "$GITHUB_SHA" > core/packages/volto/build/BUILD_COMMIT
+
+      - name: Package the build
+        working-directory: ${{ env.SERVER_CHECKOUT }}/frontend/core/packages/volto
+        run: tar -czf "$RUNNER_TEMP/frontend-build.tar.gz" build
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ github.sha }}
+          path: ${{ runner.temp }}/frontend-build.tar.gz
+          retention-days: 90
+          compression-level: 0
+          if-no-files-found: error
+
   release:
     runs-on: ubuntu-latest
     needs:

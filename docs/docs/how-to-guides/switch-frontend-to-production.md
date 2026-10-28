@@ -143,23 +143,8 @@ Reloading the page fixes it.
 
 ## Deploy changes afterward
 
-Every change now needs a pull, a build, and a restart.
-You can save these steps as a script, for example `~/bin/imsss-deploy-frontend.sh`:
-
-```shell
-#!/bin/sh
-set -eu
-cd /home/plone/imsss.net-plone-6.1.3/imsss-2025
-git pull --ff-only
-cd frontend
-sudo systemctl stop imsss-frontend.service
-set -a; . /etc/imsss-frontend.env; set +a
-pnpm build
-sudo systemctl start imsss-frontend.service   # waits until the site responds
-echo "Deployed $(git log --oneline -1)"
-```
-
-If dependencies changed, run `make install` in `frontend/` before `pnpm build`.
+After the switch, deploy changes with `devops/scripts/deploy.sh`, which downloads a build made in CI instead of building on the server.
+See the deployment section of `devops/README.md`.
 
 ## Roll back
 

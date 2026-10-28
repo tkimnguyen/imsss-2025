@@ -25,36 +25,54 @@ The frontend switched from the Volto development server to a production build on
 
 ### Deploy a change
 
-1.  Push your commits to `main` on GitHub and check that CI passes.
-2.  On the server, update the checkout.
+The frontend is built in CI, not on the server.
+For every push to `main` that changes the frontend, the `production-build` job in `.github/workflows/frontend.yml` builds it and uploads the build as an artifact named `frontend-build-<commit>`, kept for 90 days.
+`devops/scripts/deploy.sh` downloads that build and deploys it.
+
+1.  Push your commits to `main` on GitHub and wait until CI passes.
+2.  On the server, run the deploy script as root.
+    It deploys `origin/main` unless you give it a commit.
 
     ```shell
-    ssh plone@new.imsss.net
-    cd ~/imsss.net-plone-6.1.3/imsss-2025
-    git status          # should be clean; commit or discard any edits made on the server first
-    git pull --ff-only
+    ssh root@new.imsss.net
+    /home/plone/imsss.net-plone-6.1.3/imsss-2025/devops/scripts/deploy.sh
     ```
 
-3.  For frontend changes, stop the frontend, rebuild, and start it again.
-    The site is unavailable for the few minutes the build takes.
+The script:
 
-    ```shell
-    sudo systemctl stop imsss-frontend.service
-    cd frontend
-    pnpm install                                  # only if dependencies changed
-    set -a; . /etc/imsss-frontend.env; set +a
-    pnpm build
-    sudo systemctl start imsss-frontend.service   # waits until the site serves pages
-    ```
+- stops without changing anything if the checkout has uncommitted changes, if the build for the commit isn't available yet, or if `backend/instance.yaml` changed
+- downloads and checks the frontend build before updating the code
+- updates the checkout with a fast-forward merge
+- reinstalls frontend dependencies, with the frontend stopped, if they changed
+- switches to the new build and restarts the frontend, going back to the previous build if the new one doesn't start
+- installs backend dependencies if they changed, and restarts the backend if `backend/` changed
+- checks that `https://new.imsss.net/` responds
 
-    Pulling alone doesn't change the live frontend.
-    Visitors with the site already open may need to reload the page to get the new version.
+A frontend deploy makes the site unavailable only for the few seconds of the restart.
+Visitors with the site already open may need to reload the page to get the new version.
 
-4.  For backend changes, restart the backend.
+The script reads a GitHub token from `/etc/imsss-deploy.env`, as `GITHUB_TOKEN=...`.
+Use a fine-grained personal access token for `tkimnguyen/imsss-2025` only, with read access to Actions.
+Keep the file owned by root with mode 600, and renew the token before it expires.
 
-    ```shell
-    sudo systemctl restart imsss-backend.service
-    ```
+#### Backend configuration changes
+
+The script installs backend dependencies itself when `backend/pyproject.toml`, `backend/mx.ini`, or `backend/version.txt` change.
+It stops if `backend/instance.yaml` changed, because regenerating the instance configuration rewrites `backend/instance/etc/zope.conf`, which may have been edited on the server.
+Compare the change with the server's `zope.conf`, apply it by hand, commit any resulting change, and run the script again.
+
+#### Build on the server instead
+
+Building the frontend needs about 3 GB of memory.
+On a server with enough memory, you can still build it there, with the frontend stopped for the few minutes the build takes:
+
+```shell
+sudo systemctl stop imsss-frontend.service
+cd ~/imsss.net-plone-6.1.3/imsss-2025/frontend
+set -a; . /etc/imsss-frontend.env; set +a
+pnpm build
+sudo systemctl start imsss-frontend.service
+```
 
 ### Check status and logs
 
