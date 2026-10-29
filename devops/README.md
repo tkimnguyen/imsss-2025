@@ -9,7 +9,7 @@
 | Component | How it runs |
 | --- | --- |
 | Server | A Linode 1 GB plan, since October 29, 2026: Ubuntu 24.04 LTS, 1 vCPU, 1 GB RAM, 2.5 GB swap, 25 GB disk. SSH goes to the server's own address through an `imsss-server` alias, because `new.imsss.net` points to Cloudflare; see "Logging in to the server" in `docs/docs/reference/server.md`. |
-| Cloudflare | Proxies `new.imsss.net`. Visitors connect to Cloudflare, which blocks bots, scanners, and attacks, caches pages for 5 minutes for visitors who aren't logged in, and connects to nginx. See "Cloudflare" in `docs/docs/reference/server.md`. |
+| Cloudflare | Proxies `new.imsss.net`. Visitors connect to Cloudflare, which blocks bots, scanners, and attacks, caches pages for 5 minutes for visitors who aren't logged in, and connects to nginx. See `docs/docs/reference/cloudflare.md`. |
 | Code | A git checkout of this repository at `/home/plone/imsss.net-plone-6.1.3/imsss-2025`, owned by the `plone` user, on `main` |
 | Backend | `imsss-backend.service` runs Plone 6.1.3 (Python 3.12) with `backend/.venv/bin/runwsgi backend/instance/etc/zope.ini`, listening on `127.0.0.1:8080`. The Plone site ID is `Plone`. |
 | Database | ZODB FileStorage at `backend/instance/var/filestorage/Data.fs`, with images and files in `backend/instance/var/blobs`. There is no PostgreSQL. |

@@ -16,12 +16,12 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 
 | Item | Value |
 | --- | --- |
-| Host name | `new.imsss.net`, proxied by Cloudflare since October 29, 2026; see "Cloudflare" below |
+| Host name | `new.imsss.net`, proxied by Cloudflare since October 29, 2026; see {doc}`cloudflare` |
 | Operating system | Ubuntu 24.04 LTS |
 | Resources | Linode 1 GB plan since October 29, 2026: 1 vCPU, 1 GB RAM (961 MB usable), 2.5 GB swap (512 MB partition and 2 GB `/swapfile`), 25 GB disk. Before that, 2 vCPU and 4 GB RAM |
 | SSH user for the site | `plone` |
 | Docker | Not installed |
-| Firewall | `ufw`, enabled on October 28, 2026. It allows SSH (22) from anywhere, and since October 29, 2026, HTTP and HTTPS (80, 443) only from Cloudflare's address ranges; see "Cloudflare" below. |
+| Firewall | `ufw`, enabled on October 28, 2026. It allows SSH (22) from anywhere, and since October 29, 2026, HTTP and HTTPS (80, 443) only from Cloudflare's address ranges; see {doc}`cloudflare`. |
 | SSH logins | Keys only, for every account; root may log in with a key but never with a password. Set on October 28, 2026 |
 | SSH protection | fail2ban bans addresses that keep failing to log in over SSH; set up on October 28, 2026 |
 
@@ -56,7 +56,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `frontend/core/packages/volto/build.new/`, `build.failed/` | Left by `deploy.sh` only if a deploy stopped part-way, or a new build failed to start; safe to delete |
 | `/etc/imsss-deploy.env` | GitHub token that `deploy.sh` uses to download builds from CI, as `GITHUB_TOKEN=...`; owned by root, mode 600. A fine-grained token with read access to Actions on `tkimnguyen/imsss-2025` only, created on October 28, 2026, and expiring on December 27, 2026. Renew it before then. |
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
-| `/etc/nginx/conf.d/cloudflare-realip.conf` | Makes nginx log and pass on visitors' real addresses instead of Cloudflare's; see "Cloudflare" below |
+| `/etc/nginx/conf.d/cloudflare-realip.conf` | Makes nginx log and pass on visitors' real addresses instead of Cloudflare's; see {doc}`cloudflare` |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
 
 The `backend/instance/` folder is generated during installation and isn't in git.
@@ -269,148 +269,11 @@ If you're banned yourself, log in from another address or through the hosting pr
 ## Cloudflare
 
 Since October 29, 2026, Cloudflare's proxy sits in front of the site.
-The `imsss.net` domain's DNS was already on Cloudflare, and the `new` record was switched from {guilabel}`DNS only` to {guilabel}`Proxied`.
-Visitors connect to Cloudflare, and Cloudflare connects to nginx on port 443.
-
-The zone's SSL mode is {guilabel}`Automatic SSL/TLS`, which runs as {guilabel}`Full` for the whole zone.
-A Configuration Rule for the host name `new.imsss.net` sets the SSL mode to {guilabel}`Full (strict)`, so Cloudflare checks the server's Let's Encrypt certificate.
-If that check ever fails, visitors see Cloudflare's error 526 instead of the site.
-
-Two zone-wide settings, under {guilabel}`SSL/TLS` → {guilabel}`Edge Certificates`, were turned on October 29, 2026, and apply to `imsss.net` too:
-
-{guilabel}`Always Use HTTPS`
-:   Cloudflare redirects every `http://` address to `https://`.
-    It doesn't redirect certbot's `/.well-known/acme-challenge/` path, which still reaches nginx on port 80, so certificate renewal keeps working.
-
-{guilabel}`Minimum TLS Version`
-:   Set to TLS 1.2, so Cloudflare refuses TLS 1.0 and 1.1.
-    TLS 1.3 works.
-
-Managed rules
-:   Cloudflare's default managed rules block requests that try to exploit well-known vulnerabilities, such as Log4Shell and Shellshock, before they reach the server.
-    They're on by default on the free plan, and apply to the whole zone.
-    On October 29, 2026, test requests with such patterns got Cloudflare's 403 "Attention Required!" page, and didn't reach nginx.
-    Blocked requests are listed under {guilabel}`Security` → {guilabel}`Events`.
-
-Bot Fight Mode
-:   Turned on October 29, 2026, under {guilabel}`Security` → {guilabel}`Settings`.
-    Cloudflare challenges or blocks clients it identifies as bots, except verified ones such as search engines.
-    It applies to the whole zone, and the free plan allows no exceptions, so if a legitimate tool, such as an uptime monitor or a script that uses the API, starts getting challenges, turn it off.
-    Browsing, logging in, the API, and certificate renewal all still worked after it was turned on.
-
-Scanner rule
-:   A custom rule, `Block scanners on new.imsss.net`, added October 29, 2026, blocks requests for paths that only attack tools ask for.
-    The site runs no PHP and no WordPress, so nothing real matches:
-
-    ```text
-    (http.host eq "new.imsss.net" and (
-      ends_with(http.request.uri.path, ".php")
-      or http.request.uri.path contains "/.env"
-      or http.request.uri.path contains "/.git"
-      or http.request.uri.path contains "/wp-admin"
-      or http.request.uri.path contains "/wp-content"
-      or http.request.uri.path contains "/wp-includes"
-      or http.request.uri.path contains "/wp-login"
-    ))
-    ```
-
-    It applies only to `new.imsss.net`, because the old site at `imsss.net` might use PHP.
-    Before it, these requests made up most of the site's `404` responses.
-
-Login rate limit
-:   A rate limiting rule, `Limit logins on new.imsss.net`, added October 29, 2026, blocks an address for 10 seconds when it sends more than 5 login attempts in 10 seconds, to slow down password guessing:
-
-    ```text
-    (http.host eq "new.imsss.net" and http.request.method eq "POST" and http.request.uri.path eq "/++api++/@login")
-    ```
-
-    Volto's login form sends its requests to `/++api++/@login`.
-    Blocked attempts get `429 Too Many Requests` from Cloudflare.
-    Cloudflare counts across its data centers, so the block can start an attempt or two after the limit.
-    The free plan allows only this one rate limiting rule, and only a 10-second block, so it stops fast guessing but not slow, patient guessing.
-
-Page cache
-:   A cache rule, `Cache pages on new.imsss.net for visitors`, added October 29, 2026, keeps copies of pages at Cloudflare for 5 minutes, for visitors who aren't logged in:
-
-    ```text
-    (http.host eq "new.imsss.net"
-      and not http.cookie contains "auth_token"
-      and not starts_with(http.request.uri.path, "/++api++")
-      and not starts_with(http.request.uri.path, "/static/"))
-    ```
-
-    The rule sets {guilabel}`Edge TTL` to "Ignore cache-control header and use this TTL", 5 minutes, and {guilabel}`Browser TTL` to {guilabel}`Respect origin TTL`.
-    Volto keeps a logged-in user's session in the `auth_token` cookie, so editors always get live pages.
-    The API, under `/++api++`, isn't cached, and `/static/` is cached through its own one-year headers.
-    The site's only language is English, and Volto uses it for every visitor, so one cached copy suits everyone.
-
-    After an edit, visitors who aren't logged in see the change within 5 minutes.
-    To show it at once, go to {guilabel}`Caching` → {guilabel}`Configuration` → {guilabel}`Purge Cache` → {guilabel}`Custom Purge`, and enter the page's address, for example `https://new.imsss.net/congress`.
-    {guilabel}`Purge Everything` empties the whole zone's cache, including `imsss.net`'s.
-
-    The response header `cf-cache-status` shows `HIT` for a page served from the cache, `MISS` for one fetched from the server, and `DYNAMIC` for one that isn't cached.
-    Each Cloudflare data center keeps its own copy, so the first request through each one is a `MISS`.
-
-AI crawlers
-:   Allowed.
-    {guilabel}`AI Labyrinth` is off, and no AI bot policy blocks them.
-
-IP access rules
-:   None.
-    Ten {guilabel}`Allow` rules for hosting companies' addresses, left over from earlier setups and without notes, were deleted on October 29, 2026.
-    An {guilabel}`Allow` rule exempts an address from every Cloudflare security check, so add one only for a known need, with a note saying what it's for.
-
-DNSSEC
-:   Turned on October 29, 2026, under {guilabel}`DNS` → {guilabel}`Settings`.
-    The domain is registered with Cloudflare, so Cloudflare publishes the DS record itself.
-
-Email
-:   The domain sends no email, and has no MX record, so nobody receives mail at `@imsss.net` addresses either.
-    Cloudflare's {guilabel}`Email Security` setting, with {guilabel}`No email is sent from this domain` chosen, publishes `v=spf1 -all` and a DMARC record with `p=reject`, so receiving servers reject mail that claims to come from `imsss.net`.
-    Plone sends no mail either: it has no sender address, and no mail server is installed on the server.
-    Before Plone, or anything else, can send mail as `imsss.net`, set up a mail service and change the SPF and DMARC records to allow it.
-
+Visitors connect to Cloudflare, which checks each request, caches pages for visitors who aren't logged in, and connects to nginx on port 443.
+On the server, the firewall accepts web traffic only from Cloudflare's address ranges, and `/etc/nginx/conf.d/cloudflare-realip.conf` makes nginx log visitors' real addresses.
 SSH doesn't go through Cloudflare, as "Logging in to the server" explains.
 
-The firewall accepts web traffic, on ports 80 and 443, only from Cloudflare's address ranges, so nobody can reach the site without going through Cloudflare.
-A direct connection to the server's address on those ports times out.
-certbot still renews the certificate, because Let's Encrypt reaches the server through Cloudflare.
-To block a visitor, use the Cloudflare dashboard, because the firewall and fail2ban only see Cloudflare's addresses for web traffic.
-
-Every request reaches nginx from one of Cloudflare's addresses.
-`/etc/nginx/conf.d/cloudflare-realip.conf` makes nginx take the visitor's real address from the `CF-Connecting-IP` header that Cloudflare adds, so the access log, and the `X-Real-IP` and `X-Forwarded-For` headers that nginx passes to Plone, show the visitor.
-It trusts that header only from Cloudflare's address ranges, so a client that connects directly can't fake its address.
-The file has one `set_real_ip_from` line for each of Cloudflare's ranges, followed by:
-
-```nginx
-real_ip_header CF-Connecting-IP;
-```
-
-### Cloudflare's address ranges
-
-The firewall rules and the nginx file both come from `devops/cloudflare-ips.txt`, a copy of Cloudflare's published ranges at <https://www.cloudflare.com/ips-v4> and <https://www.cloudflare.com/ips-v6>.
-`devops/scripts/apply-cloudflare-ranges.sh` applies the list.
-Run it on the server as root:
-
-```shell
-/home/plone/imsss.net-plone-6.1.3/imsss-2025/devops/scripts/apply-cloudflare-ranges.sh
-```
-
-The script rewrites `/etc/nginx/conf.d/cloudflare-realip.conf` and reloads nginx, keeping the old file if nginx rejects the new one.
-It adds a firewall rule, with the comment `cloudflare`, for each range, and removes `cloudflare` rules for ranges that are no longer in the list.
-It doesn't change any other firewall rule, and running it again when nothing has changed does nothing.
-
-Every month, the `cloudflare-ranges.yml` workflow checks the list against Cloudflare's published ranges; see {doc}`ci`.
-If Cloudflare changes them, the workflow fails and GitHub emails the repository's owner.
-A missing range would make some visitors see Cloudflare's error 522, so when that happens:
-
-1.  Update `devops/cloudflare-ips.txt` with the ranges that the failed run lists, and push it.
-2.  Deploy, so that the server's checkout has the new list.
-3.  Run `apply-cloudflare-ranges.sh` on the server as root.
-4.  Run the workflow by hand, from the Actions tab or with `gh workflow run cloudflare-ranges.yml`, and check that it passes.
-
-The web ports were closed to everything else on October 29, 2026, by removing the `Nginx Full` rules with `ufw delete allow 'Nginx Full'`.
-To open them again, for example if Cloudflare is ever turned off for the site, run `ufw allow 'Nginx Full'` as root.
+See {doc}`cloudflare` for every setting, how each one was tested, how to update Cloudflare's address ranges, and how to turn Cloudflare off for the site.
 
 ## Connection tracking
 
@@ -443,7 +306,7 @@ After changing the file, apply it by running `sysctl --system` as root.
 
 After a reboot on October 29, 2026, one address, `15.204.77.139`, opened about 10 connections a second to port 443 while sending almost no requests.
 It held up to 770 connections at once, as many as the 768 that nginx's single worker can handle, and filled the connection-tracking table by about 75 entries a second.
-A firewall rule blocked it until the web ports were limited to Cloudflare's addresses later that day, which keeps out any client like it, as "Cloudflare" explains.
+A firewall rule blocked it until the web ports were limited to Cloudflare's addresses later that day, which keeps out any client like it; see {doc}`cloudflare`.
 The rule was then removed.
 
 ## Reach the apps from your computer

@@ -22,6 +22,7 @@ https://diataxis.fr/reference/
 :maxdepth: 1
 
 server
+cloudflare
 ci
 ```
 

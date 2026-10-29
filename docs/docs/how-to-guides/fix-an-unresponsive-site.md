@@ -14,7 +14,7 @@ For a `502 Bad Gateway` error, see {doc}`fix-a-502`.
 
 Visitors reach the site through Cloudflare, and the server's firewall accepts web traffic only from Cloudflare.
 So a problem can be at Cloudflare, between Cloudflare and the server, or on the server.
-See "Cloudflare" in {doc}`../reference/server` for how it's set up.
+See {doc}`../reference/cloudflare` for how it's set up.
 
 ## 1. Find where it fails
 
@@ -55,7 +55,7 @@ The part marked {guilabel}`Error` is where the request failed.
 | Code | Meaning | What to check |
 | --- | --- | --- |
 | 521 | The server refused the connection | nginx is stopped: `systemctl status nginx`. Or the firewall rejects Cloudflare: check `ufw status` for the `cloudflare` rules. |
-| 522 | The connection timed out | The firewall is missing some of Cloudflare's address ranges, so check the `cloudflare-ranges.yml` workflow; see "Cloudflare's address ranges" in {doc}`../reference/server`. Or the connection-tracking table is full; see [step 3](#connection-tracking-table-full). Or the server is overloaded or down. |
+| 522 | The connection timed out | The firewall is missing some of Cloudflare's address ranges, so check the `cloudflare-ranges.yml` workflow; see {ref}`cloudflare-address-ranges`. Or the connection-tracking table is full; see [step 3](#connection-tracking-table-full). Or the server is overloaded or down. |
 | 523 | Cloudflare can't reach the server's address | The `A` record for `new` in Cloudflare's DNS points to the wrong address, for example after moving to a new Linode. |
 | 524 | The server took more than 100 seconds to answer | Plone or Volto is stuck or overloaded: check `journalctl -u imsss-backend.service -n 100` and the load with `uptime`. |
 | 525, 526 | The HTTPS connection to the server failed, or its certificate isn't valid | Check the certificate with `certbot certificates`, and renew it with `certbot renew`; see "HTTPS certificate" in {doc}`../reference/server`. |

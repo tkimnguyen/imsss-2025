@@ -278,7 +278,7 @@ If the script finds no build, start the main workflow by hand, with `gh workflow
     }
     ```
 
-    Then run the script that allows web traffic from Cloudflare's address ranges, and creates `/etc/nginx/conf.d/cloudflare-realip.conf`, as described in "Cloudflare" in {doc}`../reference/server`, and remove the default site:
+    Then run the script that allows web traffic from Cloudflare's address ranges, and creates `/etc/nginx/conf.d/cloudflare-realip.conf`, as described in {doc}`../reference/cloudflare`, and remove the default site:
 
     ```shell
     /home/plone/imsss.net-plone-6.1.3/imsss-2025/devops/scripts/apply-cloudflare-ranges.sh

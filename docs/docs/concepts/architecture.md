@@ -44,7 +44,7 @@ flowchart LR
 6.  Cloudflare passes those `/++api++` requests on without caching them, and nginx sends them straight to Plone.
 
 Logged-in editors have an `auth_token` cookie, so Cloudflare never serves them a cached page.
-See "Cloudflare" in {doc}`../reference/server` for its settings, and {doc}`hosting-options` for why the site uses it.
+See {doc}`../reference/cloudflare` for its settings, and {doc}`hosting-options` for why the site uses it.
 
 ## Why nginx rewrites `/++api++` paths
 

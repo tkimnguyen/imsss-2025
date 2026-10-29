@@ -96,7 +96,7 @@ journalctl -k -b | grep -c "table full"
 Since October 29, 2026, the site is behind Cloudflare's free plan.
 It was moved there after a bot flooded the server with connections, following the move to the 1 GB plan.
 The `imsss.net` domain's DNS was already on Cloudflare, so turning on the proxy for the `new` record was enough.
-See "Cloudflare" in {doc}`../reference/server` for how it's set up.
+See {doc}`../reference/cloudflare` for how it's set up.
 
 The rest of this section explains what Cloudflare does and doesn't change, from the review made before the switch.
 Visitors connect to Cloudflare, and Cloudflare forwards their requests to the server.

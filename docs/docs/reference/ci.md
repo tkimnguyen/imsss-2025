@@ -69,7 +69,7 @@ If the build has expired, start the main workflow by hand to make a new one.
 
 Runs at 09:17 UTC on the first day of each month, and can be started by hand.
 It compares `devops/cloudflare-ips.txt` with Cloudflare's published address ranges, and fails if they differ, listing the changes.
-The server's firewall accepts web traffic only from the ranges in that file, so a failed run means the firewall needs updating; see "Cloudflare" in {doc}`server`.
+The server's firewall accepts web traffic only from the ranges in that file, so a failed run means the firewall needs updating; see {doc}`cloudflare`.
 
 GitHub emails a failed scheduled run to whoever last changed the workflow's schedule.
 GitHub turns off scheduled workflows in a public repository after 60 days without commits, and emails a warning first.
