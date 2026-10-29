@@ -21,7 +21,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 | Resources | Linode 1 GB plan since October 29, 2026: 1 vCPU, 1 GB RAM (961 MB usable), 2.5 GB swap (512 MB partition and 2 GB `/swapfile`), 25 GB disk. Before that, 2 vCPU and 4 GB RAM |
 | SSH user for the site | `plone` |
 | Docker | Not installed |
-| Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026 |
+| Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026. One address is blocked; see "Connection tracking" below |
 | SSH logins | Keys only, for every account; root may log in with a key but never with a password. Set on October 28, 2026 |
 | SSH protection | fail2ban bans addresses that keep failing to log in over SSH; set up on October 28, 2026 |
 
@@ -273,6 +273,18 @@ journalctl -k -b | grep -c "table full"
 ```
 
 After changing the file, apply it by running `sysctl --system` as root.
+
+After a reboot on October 29, 2026, one address, `15.204.77.139`, opened about 10 connections a second to port 443 while sending almost no requests.
+It held up to 770 connections at once, as many as the 768 that nginx's single worker can handle, and filled the connection-tracking table by about 75 entries a second.
+A firewall rule blocks it:
+
+```shell
+ufw insert 1 deny from 15.204.77.139 comment "connection flood, October 29, 2026"
+```
+
+`ufw status numbered` lists it as rule 1.
+To remove it, run `ufw delete 1` as root, after checking that it's still rule 1.
+Block any other address that does the same, in the same way.
 
 ## Reach the apps from your computer
 
