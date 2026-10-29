@@ -283,6 +283,12 @@ Two zone-wide settings, under {guilabel}`SSL/TLS` → {guilabel}`Edge Certificat
 :   Set to TLS 1.2, so Cloudflare refuses TLS 1.0 and 1.1.
     TLS 1.3 works.
 
+Managed rules
+:   Cloudflare's default managed rules block requests that try to exploit well-known vulnerabilities, such as Log4Shell and Shellshock, before they reach the server.
+    They're on by default on the free plan, and apply to the whole zone.
+    On October 29, 2026, test requests with such patterns got Cloudflare's 403 "Attention Required!" page, and didn't reach nginx.
+    Blocked requests are listed under {guilabel}`Security` → {guilabel}`Events`.
+
 DNSSEC
 :   Turned on October 29, 2026, under {guilabel}`DNS` → {guilabel}`Settings`.
     The domain is registered with Cloudflare, so Cloudflare publishes the DS record itself.
