@@ -346,7 +346,7 @@ After changing the file, apply it by running `sysctl --system` as root.
 
 After a reboot on October 29, 2026, one address, `15.204.77.139`, opened about 10 connections a second to port 443 while sending almost no requests.
 It held up to 770 connections at once, as many as the 768 that nginx's single worker can handle, and filled the connection-tracking table by about 75 entries a second.
-A firewall rule blocked it until the web ports were limited to Cloudflare's addresses later that day, which keeps out any client like it; see "Cloudflare".
+A firewall rule blocked it until the web ports were limited to Cloudflare's addresses later that day, which keeps out any client like it, as "Cloudflare" explains.
 The rule was then removed.
 
 ## Reach the apps from your computer
