@@ -298,6 +298,37 @@ Bot Fight Mode
     It applies to the whole zone, and the free plan allows no exceptions, so if a legitimate tool, such as an uptime monitor or a script that uses the API, starts getting challenges, turn it off.
     Browsing, logging in, the API, and certificate renewal all still worked after it was turned on.
 
+Scanner rule
+:   A custom rule, `Block scanners on new.imsss.net`, added October 29, 2026, blocks requests for paths that only attack tools ask for.
+    The site runs no PHP and no WordPress, so nothing real matches:
+
+    ```text
+    (http.host eq "new.imsss.net" and (
+      ends_with(http.request.uri.path, ".php")
+      or http.request.uri.path contains "/.env"
+      or http.request.uri.path contains "/.git"
+      or http.request.uri.path contains "/wp-admin"
+      or http.request.uri.path contains "/wp-content"
+      or http.request.uri.path contains "/wp-includes"
+      or http.request.uri.path contains "/wp-login"
+    ))
+    ```
+
+    It applies only to `new.imsss.net`, because the old site at `imsss.net` might use PHP.
+    Before it, these requests made up most of the site's `404` responses.
+
+Login rate limit
+:   A rate limiting rule, `Limit logins on new.imsss.net`, added October 29, 2026, blocks an address for 10 seconds when it sends more than 5 login attempts in 10 seconds, to slow down password guessing:
+
+    ```text
+    (http.host eq "new.imsss.net" and http.request.method eq "POST" and http.request.uri.path eq "/++api++/@login")
+    ```
+
+    Volto's login form sends its requests to `/++api++/@login`.
+    Blocked attempts get `429 Too Many Requests` from Cloudflare.
+    Cloudflare counts across its data centers, so the block can start an attempt or two after the limit.
+    The free plan allows only this one rate limiting rule, and only a 10-second block, so it stops fast guessing but not slow, patient guessing.
+
 AI crawlers
 :   Allowed.
     {guilabel}`AI Labyrinth` is off, and no AI bot policy blocks them.
