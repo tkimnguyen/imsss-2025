@@ -104,8 +104,9 @@ Add these lines, then save:
 [Service]
 EnvironmentFile=/etc/imsss-frontend.env
 Environment="NODE_ENV=production"
+WorkingDirectory=/home/plone/imsss.net-plone-6.1.3/imsss-2025/frontend/core/packages/volto
 ExecStart=
-ExecStart=/home/plone/.nvm/versions/node/v22.21.1/bin/pnpm start:prod
+ExecStart=/home/plone/.nvm/versions/node/v22.21.1/bin/node build/server.js
 ExecStartPost=/bin/sh -c 'until curl -fsS -o /dev/null http://127.0.0.1:3000/; do sleep 2; done'
 TimeoutStartSec=120
 ```
@@ -115,8 +116,11 @@ TimeoutStartSec=120
 `EnvironmentFile`
 :   Loads the same settings that the build used.
 
-`ExecStart`
+`WorkingDirectory` and `ExecStart`
 :   The empty `ExecStart=` line removes the development-server command before adding the new one.
+    The new command runs the build with `node` from Volto's package folder, the same as `pnpm start:prod` does.
+    Running it directly avoids two `pnpm` processes that would otherwise wait in memory, using about 125 MB.
+    The switch on October 28, 2026, used `pnpm start:prod`, and this was changed on October 29.
 
 `ExecStartPost`
 :   Makes `systemctl start` and `systemctl restart` wait until the frontend serves a page.

@@ -12,7 +12,7 @@
 | Code | A git checkout of this repository at `/home/plone/imsss.net-plone-6.1.3/imsss-2025`, owned by the `plone` user, on `main` |
 | Backend | `imsss-backend.service` runs Plone 6.1.3 (Python 3.12) with `backend/.venv/bin/runwsgi backend/instance/etc/zope.ini`, listening on `127.0.0.1:8080`. The Plone site ID is `Plone`. |
 | Database | ZODB FileStorage at `backend/instance/var/filestorage/Data.fs`, with images and files in `backend/instance/var/blobs`. There is no PostgreSQL. |
-| Frontend | `imsss-frontend.service` runs a **production build** of Volto 18.29.1 with `pnpm start:prod`, listening on `127.0.0.1:3000`. Its settings are in `/etc/imsss-frontend.env`. |
+| Frontend | `imsss-frontend.service` runs a **production build** of Volto 18.29.1 with `node build/server.js`, listening on `127.0.0.1:3000`. Its settings are in `/etc/imsss-frontend.env`. |
 | Web server | nginx, configured in `/etc/nginx/sites-enabled/plone.conf`. It terminates TLS, sends `/++api++` and `/robots.txt` to the backend (rewritten through the Virtual Host Monster to `/Plone`), and sends everything else to the frontend. HTTP redirects to HTTPS. |
 | TLS certificate | Let's Encrypt, managed by the certbot snap. `snap.certbot.renew.timer` renews it automatically. |
 | Firewall | `ufw` allows only SSH (22) and HTTP/HTTPS (80, 443) from outside. SSH accepts key logins only, and fail2ban bans addresses that repeatedly fail SSH logins. |

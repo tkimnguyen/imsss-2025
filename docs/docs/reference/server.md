@@ -111,15 +111,17 @@ WantedBy=multi-user.target
 ```
 
 The unit file above still contains the original development-server command.
-Since October 28, 2026, a drop-in replaces it with the production build:
+Since October 28, 2026, a drop-in replaces it with the production build.
+Since October 29, 2026, it starts the build with `node` directly, instead of through `pnpm start:prod`, which saves about 125 MB of memory taken by two waiting `pnpm` processes:
 
 ```ini
 # /etc/systemd/system/imsss-frontend.service.d/override.conf
 [Service]
 EnvironmentFile=/etc/imsss-frontend.env
 Environment="NODE_ENV=production"
+WorkingDirectory=/home/plone/imsss.net-plone-6.1.3/imsss-2025/frontend/core/packages/volto
 ExecStart=
-ExecStart=/home/plone/.nvm/versions/node/v22.21.1/bin/pnpm start:prod
+ExecStart=/home/plone/.nvm/versions/node/v22.21.1/bin/node build/server.js
 ExecStartPost=/bin/sh -c 'until curl -fsS -o /dev/null http://127.0.0.1:3000/; do sleep 2; done'
 TimeoutStartSec=120
 ```
