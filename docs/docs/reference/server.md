@@ -190,6 +190,9 @@ sudo certbot renew --dry-run              # test that renewal works
 certbot proves it controls `new.imsss.net` over port 80, which works through Cloudflare's proxy.
 A renewal test passed on October 29, 2026, after the switch to Cloudflare.
 When run without a terminal, as here, `certbot renew --dry-run` first waits a random few minutes.
+`--no-random-sleep-on-renew` skips that wait.
+A dry run soon after another one can fail with `authorization must be pending` or `Order's status ("invalid") is not acceptable for finalization`, because the Let's Encrypt test service reuses the earlier authorization.
+That says nothing about the real renewal: run it again, and it passes.
 
 ## Logs and status
 
@@ -288,6 +291,12 @@ Managed rules
     They're on by default on the free plan, and apply to the whole zone.
     On October 29, 2026, test requests with such patterns got Cloudflare's 403 "Attention Required!" page, and didn't reach nginx.
     Blocked requests are listed under {guilabel}`Security` → {guilabel}`Events`.
+
+Bot Fight Mode
+:   Turned on October 29, 2026, under {guilabel}`Security` → {guilabel}`Settings`.
+    Cloudflare challenges or blocks clients it identifies as bots, except verified ones such as search engines.
+    It applies to the whole zone, and the free plan allows no exceptions, so if a legitimate tool, such as an uptime monitor or a script that uses the API, starts getting challenges, turn it off.
+    Browsing, logging in, the API, and certificate renewal all still worked after it was turned on.
 
 DNSSEC
 :   Turned on October 29, 2026, under {guilabel}`DNS` → {guilabel}`Settings`.
