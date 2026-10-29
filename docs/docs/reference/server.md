@@ -273,7 +273,7 @@ The zone's SSL mode is {guilabel}`Automatic SSL/TLS`, which runs as {guilabel}`F
 A Configuration Rule for the host name `new.imsss.net` sets the SSL mode to {guilabel}`Full (strict)`, so Cloudflare checks the server's Let's Encrypt certificate.
 If that check ever fails, visitors see Cloudflare's error 526 instead of the site.
 
-Two zone-wide settings, under {guilabel}`SSL/TLS` → {guilabel}`Edge Certificates`, were turned on on October 29, 2026, and apply to `imsss.net` too:
+Two zone-wide settings, under {guilabel}`SSL/TLS` → {guilabel}`Edge Certificates`, were turned on October 29, 2026, and apply to `imsss.net` too:
 
 {guilabel}`Always Use HTTPS`
 :   Cloudflare redirects every `http://` address to `https://`.
