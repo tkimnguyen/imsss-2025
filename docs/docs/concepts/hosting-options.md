@@ -158,7 +158,7 @@ Firewall (optional)
 1.  Switch the `new` DNS record to {guilabel}`Proxied`.
 2.  Add a Configuration Rule that sets the SSL mode to {guilabel}`Full (strict)` for `new.imsss.net`, leaving the rest of the zone unchanged.
 3.  Add an SSH alias for the server's own address, and use it in scripts and docs.
-4.  Configure nginx's `real_ip` settings, and test viewing the site, logging in, editing, and certificate renewal.
+4.  Configure nginx's `real_ip` settings, and test viewing the site and certificate renewal.
 5.  If wanted, limit the firewall to Cloudflare's address ranges.
 
 Cloudflare's free plan features change from time to time.

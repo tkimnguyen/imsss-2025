@@ -56,6 +56,7 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `frontend/core/packages/volto/build.new/`, `build.failed/` | Left by `deploy.sh` only if a deploy stopped part-way, or a new build failed to start; safe to delete |
 | `/etc/imsss-deploy.env` | GitHub token that `deploy.sh` uses to download builds from CI, as `GITHUB_TOKEN=...`; owned by root, mode 600. A fine-grained token with read access to Actions on `tkimnguyen/imsss-2025` only, created on October 28, 2026, and expiring on December 27, 2026. Renew it before then. |
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
+| `/etc/nginx/conf.d/cloudflare-realip.conf` | Makes nginx log and pass on visitors' real addresses instead of Cloudflare's; see "Cloudflare" below |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
 
 The `backend/instance/` folder is generated during installation and isn't in git.
@@ -170,7 +171,8 @@ Port 80
 nginx's `default` site, which showed a "Welcome to nginx!" page for other host names, was turned off on October 28, 2026, by removing its link from `sites-enabled`.
 Its file is still in `/etc/nginx/sites-available/default`.
 
-nginx listens only on IPv4, and `new.imsss.net` has no IPv6 (`AAAA`) record.
+nginx listens only on IPv4.
+Cloudflare accepts visitors over IPv6 too, and connects to the server over IPv4.
 
 ## HTTPS certificate
 
@@ -184,6 +186,10 @@ The renewal settings are in `/etc/letsencrypt/renewal/new.imsss.net.conf`.
 sudo certbot certificates                 # show the certificate and its expiry date
 sudo certbot renew --dry-run              # test that renewal works
 ```
+
+certbot proves it controls `new.imsss.net` over port 80, which works through Cloudflare's proxy.
+A renewal test passed on October 29, 2026, after the switch to Cloudflare.
+When run without a terminal, as here, `certbot renew --dry-run` first waits a random few minutes.
 
 ## Logs and status
 
@@ -270,6 +276,24 @@ If that check ever fails, visitors see Cloudflare's error 526 instead of the sit
 SSH doesn't go through Cloudflare, as "Logging in to the server" explains.
 Firewall rules and fail2ban bans apply only to connections made directly to the server, not to visitors who come through Cloudflare.
 Block those in the Cloudflare dashboard instead.
+
+Every request reaches nginx from one of Cloudflare's addresses.
+`/etc/nginx/conf.d/cloudflare-realip.conf` makes nginx take the visitor's real address from the `CF-Connecting-IP` header that Cloudflare adds, so the access log, and the `X-Real-IP` and `X-Forwarded-For` headers that nginx passes to Plone, show the visitor.
+It trusts that header only from Cloudflare's address ranges, so a client that connects directly can't fake its address.
+The file has one `set_real_ip_from` line for each range, from <https://www.cloudflare.com/ips-v4> and <https://www.cloudflare.com/ips-v6> as of October 29, 2026, followed by:
+
+```nginx
+real_ip_header CF-Connecting-IP;
+```
+
+To rebuild it, for example when Cloudflare adds ranges, run this as root:
+
+```shell
+{ for r in $(curl -fsS https://www.cloudflare.com/ips-v4) $(curl -fsS https://www.cloudflare.com/ips-v6); do
+    echo "set_real_ip_from $r;"; done
+  echo "real_ip_header CF-Connecting-IP;"; } > /etc/nginx/conf.d/cloudflare-realip.conf
+nginx -t && systemctl reload nginx
+```
 
 ## Connection tracking
 

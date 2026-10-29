@@ -278,6 +278,8 @@ If the script finds no build, start the main workflow by hand, with `gh workflow
     }
     ```
 
+    Also create `/etc/nginx/conf.d/cloudflare-realip.conf`, as described in "Cloudflare" in {doc}`../reference/server`, then:
+
     ```shell
     rm /etc/nginx/sites-enabled/default
     nginx -t && systemctl reload nginx
