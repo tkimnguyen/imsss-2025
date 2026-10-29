@@ -273,6 +273,16 @@ The zone's SSL mode is {guilabel}`Automatic SSL/TLS`, which runs as {guilabel}`F
 A Configuration Rule for the host name `new.imsss.net` sets the SSL mode to {guilabel}`Full (strict)`, so Cloudflare checks the server's Let's Encrypt certificate.
 If that check ever fails, visitors see Cloudflare's error 526 instead of the site.
 
+Two zone-wide settings, under {guilabel}`SSL/TLS` → {guilabel}`Edge Certificates`, were turned on on October 29, 2026, and apply to `imsss.net` too:
+
+{guilabel}`Always Use HTTPS`
+:   Cloudflare redirects every `http://` address to `https://`.
+    It doesn't redirect certbot's `/.well-known/acme-challenge/` path, which still reaches nginx on port 80, so certificate renewal keeps working.
+
+{guilabel}`Minimum TLS Version`
+:   Set to TLS 1.2, so Cloudflare refuses TLS 1.0 and 1.1.
+    TLS 1.3 works.
+
 SSH doesn't go through Cloudflare, as "Logging in to the server" explains.
 
 The firewall accepts web traffic, on ports 80 and 443, only from Cloudflare's address ranges, so nobody can reach the site without going through Cloudflare.
