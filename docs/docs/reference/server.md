@@ -55,8 +55,6 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `/etc/imsss-deploy.env` | GitHub token that `deploy.sh` uses to download builds from CI, as `GITHUB_TOKEN=...`; owned by root, mode 600. A fine-grained token with read access to Actions on `tkimnguyen/imsss-2025` only, created on October 28, 2026, and expiring on December 27, 2026. Renew it before then. |
 | `/etc/nginx/sites-enabled/plone.conf` | nginx site configuration |
 | `/var/log/nginx/new.imsss.net.access.log`, `.error.log` | nginx logs |
-| `/root/plone.conf.bak-20261028` | Copy of the nginx site configuration from before the `robots.txt` rule was added; safe to delete |
-| `/home/plone/frontend-build-20261028.log` | Output of the first two production builds, on October 28, 2026; safe to delete |
 
 The `backend/instance/` folder is generated during installation and isn't in git.
 

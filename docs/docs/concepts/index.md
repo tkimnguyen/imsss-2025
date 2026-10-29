@@ -23,4 +23,5 @@ https://diataxis.fr/explanation/
 :maxdepth: 1
 
 architecture
+hosting-options
 ```

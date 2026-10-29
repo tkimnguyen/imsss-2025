@@ -114,16 +114,7 @@ Also open the site in a browser without an SSH tunnel, for example on your phone
     }
     ```
 
-    The configuration from before the change is saved as `/root/plone.conf.bak-20261028`.
-    To undo the change, run these commands as root:
-
-    ```shell
-    cp /root/plone.conf.bak-20261028 /etc/nginx/sites-enabled/plone.conf
-    nginx -t && systemctl reload nginx
-    ```
-
-    The backup is outside `/etc/nginx/`, so nginx doesn't load it.
-    Delete it once you no longer need to undo the change.
+    To undo the change, delete this block from `plone.conf`, then run `nginx -t && systemctl reload nginx` as root.
 
 `Can't resolve '.../packages/volto-imsss-2025/src/theme/...'`
 :   A file that the theme's SCSS refers to is missing.
