@@ -18,7 +18,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 | --- | --- |
 | Host name | `new.imsss.net` |
 | Operating system | Ubuntu 24.04 LTS |
-| Resources | 2 vCPU, 3.8 GB RAM, 2.5 GB swap (512 MB partition and 2 GB `/swapfile`), 25 GB disk |
+| Resources | Linode 1 GB plan since October 29, 2026: 1 vCPU, 1 GB RAM (961 MB usable), 2.5 GB swap (512 MB partition and 2 GB `/swapfile`), 25 GB disk. Before that, 2 vCPU and 4 GB RAM |
 | SSH user for the site | `plone` |
 | Docker | Not installed |
 | Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026 |
@@ -43,6 +43,8 @@ All paths below are relative to the checkout at `/home/plone/imsss.net-plone-6.1
 | `/swapfile` | 2 GB swap file, listed in `/etc/fstab` |
 | `/etc/ssh/sshd_config.d/00-imsss.conf` | Turns off password logins over SSH; see below |
 | `/etc/fail2ban/jail.d/imsss.local` | fail2ban settings for the SSH jail; see below |
+| `/etc/sysctl.d/60-imsss-conntrack.conf` | Enlarges the firewall's connection-tracking table, and shortens how long it remembers idle connections; see "Connection tracking" below |
+| `/etc/modules-load.d/imsss-conntrack.conf` | Loads connection tracking early in boot, so that the settings above apply |
 | `/etc/systemd/journald.conf.d/size.conf` | Limits the systemd journal to 200 MB (`SystemMaxUse=200M`) |
 | `/etc/systemd/system/imsss-backend.service` | Backend service unit |
 | `/etc/systemd/system/imsss-frontend.service` | Frontend service unit |
@@ -157,6 +159,10 @@ Port 443
     - Files ending in `.js`, `.css`, or font extensions, and static images, go to the frontend with a one-year `Cache-Control: public` header.
     - Everything else goes to the frontend.
 
+    Two timeouts, added on October 29, 2026, close unused connections sooner than nginx's defaults:
+    `client_header_timeout 10s` closes a connection that sends no request within 10 seconds, instead of 60, and `keepalive_timeout 15s` closes an idle connection after 15 seconds, instead of 75.
+    The first stops bots that open connections without sending anything from holding hundreds of them.
+
 Port 80
 :   Redirects `new.imsss.net` to HTTPS, and returns `404` for any other host name or for the server's IP address.
 
@@ -239,6 +245,35 @@ sudo fail2ban-client set sshd unbanip ADDRESS
 
 If you're banned yourself, log in from another address or through the hosting provider's web console, then lift the ban.
 
+## Connection tracking
+
+The firewall keeps a table of open connections, the connection-tracking table.
+When the table is full, the kernel drops new connections, so the site, and SSH, stop responding, while the server itself looks healthy.
+The kernel logs `nf_conntrack: table full, dropping packet` when this happens.
+
+The table's default size depends on the server's memory: 8,192 connections on the 1 GB plan.
+That filled within seconds of booting after the move to the 1 GB plan on October 29, 2026, so `/etc/sysctl.d/60-imsss-conntrack.conf` now sets:
+
+```ini
+net.netfilter.nf_conntrack_max = 65536
+net.netfilter.nf_conntrack_tcp_timeout_established = 600
+```
+
+The first line allows 65,536 connections, using about 20 MB of memory.
+The second makes the table forget a connection that has sent nothing for 10 minutes, instead of 5 days.
+A connection that wakes up after that is picked up again, so idle SSH sessions keep working.
+
+Boot applies `sysctl.d` files before the firewall loads connection tracking, so `/etc/modules-load.d/imsss-conntrack.conf` loads it earlier, with the line `nf_conntrack`.
+
+To check the table:
+
+```shell
+sysctl net.netfilter.nf_conntrack_count net.netfilter.nf_conntrack_max
+journalctl -k -b | grep -c "table full"
+```
+
+After changing the file, apply it by running `sysctl --system` as root.
+
 ## Reach the apps from your computer
 
 Both apps listen only on the server's loopback interface.
@@ -255,8 +290,8 @@ Don't run a local backend or frontend at the same time, because they use the sam
 
 The server has about 2.5 GB of swap: a 512 MB partition, `/dev/sdb`, and a 2 GB swap file, `/swapfile`, added on October 28, 2026, using the steps below.
 
-The running site needs about 700–800 MB of memory, including Ubuntu itself.
-On a server with 1 GB of memory, add a swap file so that occasional peaks, and reinstalling frontend dependencies during a deploy, don't run out of memory.
+On the 1 GB plan, the running site uses about 650 MB of memory, including Ubuntu itself, as measured on October 29, 2026.
+The swap file lets occasional peaks, and reinstalling frontend dependencies during a deploy, use more than that without running out of memory.
 
 To add a 2 GB swap file, run these commands as root:
 

@@ -104,6 +104,7 @@ Then set up, as described in {doc}`../reference/server`:
 
 - the SSH settings in `/etc/ssh/sshd_config.d/00-imsss.conf`, from "Logging in to the server"
 - the swap file, from "Swap"
+- the connection-tracking files `/etc/sysctl.d/60-imsss-conntrack.conf` and `/etc/modules-load.d/imsss-conntrack.conf`, then `sysctl --system`, from "Connection tracking"
 - the journal limit, `/etc/systemd/journald.conf.d/size.conf` with `SystemMaxUse=200M`, then `systemctl restart systemd-journald`
 
 Turn on the firewall:
@@ -236,6 +237,8 @@ If the script finds no build, start the main workflow by hand, with `gh workflow
       listen 80;
       server_name  new.imsss.net;
       client_max_body_size 10M;
+      keepalive_timeout 15s;
+      client_header_timeout 10s;
       access_log  /var/log/nginx/new.imsss.net.access.log;
       error_log  /var/log/nginx/new.imsss.net.error.log;
 
