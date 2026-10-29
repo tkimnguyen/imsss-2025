@@ -21,7 +21,7 @@ Make content changes on the live site, and use the local copy for trying out cod
 ## Before you start
 
 - Install the project locally with `make install`, as in the README's quick start.
-- Make sure you can connect to the server with `ssh plone@new.imsss.net`.
+- Make sure you can connect to the server with `ssh plone@imsss-server`.
 - Close any SSH tunnel to the server, because the local backend and frontend use the same ports.
 
 ## 1. Stop the local backend
@@ -44,7 +44,7 @@ mkdir filestorage
 ## 3. Copy the live data
 
 ```shell
-REMOTE=plone@new.imsss.net:imsss.net-plone-6.1.3/imsss-2025/backend/instance/var
+REMOTE=plone@imsss-server:imsss.net-plone-6.1.3/imsss-2025/backend/instance/var
 scp "$REMOTE/filestorage/Data.fs" filestorage/Data.fs
 scp -r "$REMOTE/blobs" ./blobs
 ```
@@ -57,7 +57,7 @@ Check that the copy is complete by comparing sizes with the server:
 
 ```shell
 ls -l filestorage/Data.fs && find blobs -type f | wc -l
-ssh plone@new.imsss.net 'cd imsss.net-plone-6.1.3/imsss-2025/backend/instance/var && ls -l filestorage/Data.fs && find blobs -type f | wc -l'
+ssh plone@imsss-server 'cd imsss.net-plone-6.1.3/imsss-2025/backend/instance/var && ls -l filestorage/Data.fs && find blobs -type f | wc -l'
 ```
 
 ## 4. Start the local site

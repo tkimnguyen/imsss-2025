@@ -16,7 +16,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 
 | Item | Value |
 | --- | --- |
-| Host name | `new.imsss.net` |
+| Host name | `new.imsss.net`, proxied by Cloudflare since October 29, 2026; see "Cloudflare" below |
 | Operating system | Ubuntu 24.04 LTS |
 | Resources | Linode 1 GB plan since October 29, 2026: 1 vCPU, 1 GB RAM (961 MB usable), 2.5 GB swap (512 MB partition and 2 GB `/swapfile`), 25 GB disk. Before that, 2 vCPU and 4 GB RAM |
 | SSH user for the site | `plone` |
@@ -198,6 +198,18 @@ sudo fail2ban-client status sshd                        # addresses currently ba
 
 ## Logging in to the server
 
+`new.imsss.net` points to Cloudflare, which carries only web traffic, so SSH has to use the server's own IPv4 address.
+That address isn't in these docs, because publishing it would let anyone go around Cloudflare.
+Find it in Cloud Manager, on the Linode's {guilabel}`Network` tab, and add an alias for it to `~/.ssh/config` on your computer:
+
+```text
+Host imsss-server
+    HostName SERVER-ADDRESS
+```
+
+These docs use `imsss-server` in every SSH, `scp`, and `rsync` command, and `devops/scripts/pull-backups.sh` uses it too.
+If the server's address changes, update `HostName`.
+
 SSH accepts only key logins.
 `/etc/ssh/sshd_config.d/00-imsss.conf` sets:
 
@@ -244,6 +256,20 @@ sudo fail2ban-client set sshd unbanip ADDRESS
 ```
 
 If you're banned yourself, log in from another address or through the hosting provider's web console, then lift the ban.
+
+## Cloudflare
+
+Since October 29, 2026, Cloudflare's proxy sits in front of the site.
+The `imsss.net` domain's DNS was already on Cloudflare, and the `new` record was switched from {guilabel}`DNS only` to {guilabel}`Proxied`.
+Visitors connect to Cloudflare, and Cloudflare connects to nginx on port 443.
+
+The zone's SSL mode is {guilabel}`Automatic SSL/TLS`, which runs as {guilabel}`Full` for the whole zone.
+A Configuration Rule for the host name `new.imsss.net` sets the SSL mode to {guilabel}`Full (strict)`, so Cloudflare checks the server's Let's Encrypt certificate.
+If that check ever fails, visitors see Cloudflare's error 526 instead of the site.
+
+SSH doesn't go through Cloudflare, as "Logging in to the server" explains.
+Firewall rules and fail2ban bans apply only to connections made directly to the server, not to visitors who come through Cloudflare.
+Block those in the Cloudflare dashboard instead.
 
 ## Connection tracking
 
@@ -292,7 +318,7 @@ Both apps listen only on the server's loopback interface.
 To reach them from your computer, open a tunnel:
 
 ```shell
-ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000
+ssh plone@imsss-server -L8080:localhost:8080 -L3000:localhost:3000
 ```
 
 While it's open, `http://localhost:8080/` reaches the server's Plone backend and Zope management interface, and `http://localhost:3000/` reaches its Volto frontend.

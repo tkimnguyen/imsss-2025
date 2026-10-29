@@ -93,12 +93,15 @@ journalctl -k -b | grep -c "table full"
 
 ## Cloudflare
 
-Cloudflare's free plan would sit between visitors and the server.
-Visitors would connect to Cloudflare, and Cloudflare would forward their requests to the server.
+Since October 29, 2026, the site is behind Cloudflare's free plan.
+It was moved there after a bot flooded the server with connections, following the move to the 1 GB plan.
+The `imsss.net` domain's DNS was already on Cloudflare, so turning on the proxy for the `new` record was enough.
+See "Cloudflare" in {doc}`../reference/server` for how it's set up.
 
-In short, Cloudflare would make the site faster for distant visitors and better protected against attacks and aggressive bots.
-It wouldn't change how much memory the server needs, or how new code is deployed.
-It's worth doing if bot traffic or attacks become a problem, provided the domain's DNS records are all copied across when it moves.
+The rest of this section explains what Cloudflare does and doesn't change, from the review made before the switch.
+Visitors connect to Cloudflare, and Cloudflare forwards their requests to the server.
+That makes the site faster for distant visitors and better protected against attacks and aggressive bots.
+It doesn't change how much memory the server needs, or how new code is deployed.
 
 ### What Cloudflare would add
 
@@ -129,12 +132,14 @@ Outages would still be visible
 Memory and deployment
 :   Plone and Volto would still run on the server, so it would need the same memory, and deploying would work the same way.
 
-### What setting it up would involve
+### What setting it up involves
 
 DNS
-:   The whole `imsss.net` domain would move to Cloudflare's name servers.
-    Every existing DNS record must be copied across exactly, **especially the email (MX) records**, and any records for other sites on the domain.
-    A mistake here could stop email from arriving, so export the current records before the move and compare them afterward.
+:   The domain's DNS must be on Cloudflare, as `imsss.net`'s already was.
+    Moving a domain there means copying every existing DNS record across exactly, **especially the email (MX) records**.
+
+SSH
+:   Cloudflare carries only web traffic, so SSH has to use the server's own address instead of `new.imsss.net`.
 
 HTTPS
 :   Cloudflare's "Full (strict)" SSL mode keeps the connection between Cloudflare and the server encrypted, using the server's existing Let's Encrypt certificate.
@@ -148,13 +153,13 @@ Firewall (optional)
 :   Ports 80 and 443 could be limited to Cloudflare's address ranges.
     Cloudflare changes those ranges from time to time, so the firewall rules would need occasional updates.
 
-### Steps, if the site moves behind Cloudflare
+### Steps used
 
-1.  Export and keep a copy of all current DNS records.
-2.  Move the DNS, and compare every record, especially email.
-3.  Set the SSL mode to "Full (strict)" and configure nginx's `real_ip` settings.
-4.  Test viewing the site, logging in, editing, and certificate renewal.
-5.  Only then, if wanted, limit the firewall to Cloudflare's address ranges.
+1.  Switch the `new` DNS record to {guilabel}`Proxied`.
+2.  Add a Configuration Rule that sets the SSL mode to {guilabel}`Full (strict)` for `new.imsss.net`, leaving the rest of the zone unchanged.
+3.  Add an SSH alias for the server's own address, and use it in scripts and docs.
+4.  Configure nginx's `real_ip` settings, and test viewing the site, logging in, editing, and certificate renewal.
+5.  If wanted, limit the firewall to Cloudflare's address ranges.
 
 Cloudflare's free plan features change from time to time.
 Check the current plan details, especially cookie-based caching rules, before deciding.

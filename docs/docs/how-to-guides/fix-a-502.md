@@ -15,7 +15,7 @@ The frontend handles every page and the backend handles `/++api++`, so a 502 on 
 Run the commands in this guide on the server as root.
 
 ```shell
-ssh root@new.imsss.net
+ssh root@imsss-server
 ```
 
 ## 1. Find which app isn't listening

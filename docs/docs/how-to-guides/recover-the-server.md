@@ -58,13 +58,12 @@ If you're not sure the backup is good, restore it to a new Linode first, as desc
     Linode creates it in the same region as the backup.
 3.  When the new Linode is running, turn on the Backup Service for it under {guilabel}`Backups`.
     Backups belong to a Linode, so the new one starts with none.
-4.  Note the new Linode's IPv4 address, then change the `A` record for `new.imsss.net` to it.
+4.  Note the new Linode's IPv4 address.
+    In the Cloudflare dashboard, change the `A` record for `new` in the `imsss.net` zone to it, and leave it {guilabel}`Proxied`.
     The site has no IPv6 (`AAAA`) record, because nginx listens only on IPv4.
-5.  Wait for the DNS change to reach you.
-
-    ```shell
-    dig +short new.imsss.net A
-    ```
+5.  On your computer, and on the Mac that copies the backups, change `HostName` for `imsss-server` in `~/.ssh/config` to the new address.
+    See "Logging in to the server" in {doc}`../reference/server`.
+    Cloudflare applies the DNS change within a few minutes.
 
 6.  Follow [Check the site](#check-the-site).
 7.  Delete the old Linode once the new one works, to stop paying for it.
@@ -83,13 +82,12 @@ Run the commands as root unless a step says `plone`.
 
 1.  In Cloud Manager, create a Linode with Ubuntu 24.04 LTS, at least 1 GB of memory, and your SSH public key as a root key.
     Turn on the Backup Service.
-2.  Change the `A` record for `new.imsss.net` to the new Linode's IPv4 address.
-    The HTTPS certificate in step 7 needs them.
-3.  Remove the old server's host key from your computer, and log in.
+2.  In the Cloudflare dashboard, change the `A` record for `new` in the `imsss.net` zone to the new Linode's IPv4 address, and leave it {guilabel}`Proxied`.
+    The HTTPS certificate in step 7 needs it.
+3.  On your computer, change `HostName` for `imsss-server` in `~/.ssh/config` to the new address, as described in "Logging in to the server" in {doc}`../reference/server`, and log in.
 
     ```shell
-    ssh-keygen -R new.imsss.net
-    ssh root@new.imsss.net
+    ssh root@imsss-server
     ```
 
 ### 2. Install packages and secure the server
@@ -180,7 +178,7 @@ The restored database in the next step brings back the real `admin` password and
 From the Mac, copy the backups to the new server with your own key, not the read-only backup key:
 
 ```shell
-rsync -a ~/imsss-backups/filestorage ~/imsss-backups/blobs plone@new.imsss.net:backups/
+rsync -a ~/imsss-backups/filestorage ~/imsss-backups/blobs plone@imsss-server:backups/
 ```
 
 Then, on the server as `plone`, restore the newest database backup and blob archive:
@@ -297,11 +295,10 @@ If the script finds no build, start the main workflow by hand, with `gh workflow
 ### 8. Set up the backups
 
 1.  Set up the daily backup, as described in "Schedule a daily database backup" in {doc}`back-up-and-restore`.
-2.  On the Mac, accept the new server's host key, so that the daily copy can connect:
+2.  On the Mac, change `HostName` for `imsss-server` in `~/.ssh/config` to the new address, and accept the new server's host key, so that the daily copy can connect:
 
     ```shell
-    ssh-keygen -R new.imsss.net
-    ssh -i ~/.ssh/imsss_backup_pull plone@new.imsss.net
+    ssh -i ~/.ssh/imsss_backup_pull plone@imsss-server
     ```
 
     Answer `yes` to the host key prompt.
@@ -326,11 +323,11 @@ systemctl list-timers imsss-backup.timer snap.certbot.renew.timer
 certbot certificates | grep -E "Domains|Expiry"
 ```
 
-Then, from your own computer:
+Then, from your own computer, using the server's own address for the second check, because Cloudflare doesn't carry port 3000:
 
 ```shell
 curl -s -o /dev/null -w '%{http_code}\n' https://new.imsss.net/    # 200
-curl -m 8 http://new.imsss.net:3000/                                # times out
+curl -m 8 http://SERVER-ADDRESS:3000/                               # times out
 ```
 
 Finally, open the site in a browser, check that pages and images load and look right, log in, and edit and save a page.

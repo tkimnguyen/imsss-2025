@@ -36,7 +36,7 @@ If a build has expired, start the CI workflow by hand, from the Actions tab or w
     It deploys `origin/main` unless you give it a commit.
 
     ```shell
-    ssh root@new.imsss.net
+    ssh root@imsss-server
     /home/plone/imsss.net-plone-6.1.3/imsss-2025/devops/scripts/deploy.sh
     ```
 
@@ -108,7 +108,7 @@ Both apps listen only on the server's loopback interface.
 To reach them from your computer, open a tunnel:
 
 ```shell
-ssh plone@new.imsss.net -L8080:localhost:8080 -L3000:localhost:3000
+ssh plone@imsss-server -L8080:localhost:8080 -L3000:localhost:3000
 ```
 
 While the tunnel is open, `localhost:3000` and `localhost:8080` on your computer point to the server, so don't run a local Volto or Plone at the same time.
@@ -190,6 +190,7 @@ Modify `devops/inventory/hosts.yml` with the appropriate connection details:
 prod:
   hosts:
     new.imsss.net:
+      ansible_host: imsss-server
       ansible_user: root
       host: new
       hostname: new.imsss.net

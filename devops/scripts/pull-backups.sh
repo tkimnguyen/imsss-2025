@@ -16,7 +16,8 @@ setopt null_glob
 DEST=${IMSSS_BACKUP_DIR:-$HOME/imsss-backups}
 KEY=$HOME/.ssh/imsss_backup_pull
 RSYNC=/opt/homebrew/bin/rsync
-SOURCE=plone@new.imsss.net:./
+# imsss-server is an SSH alias for the server; see "Copy the backups off the server".
+SOURCE=plone@${IMSSS_SERVER:-imsss-server}:./
 
 notify() { osascript -e "display notification \"$1\" with title \"IMSSS backup copy\"" 2>/dev/null || true; }
 fail() { echo "ERROR: $*" >&2; notify "$*"; exit 1; }
@@ -30,7 +31,7 @@ if [[ ${1:-} != --thin-only ]]; then
     $RSYNC -a --itemize-changes \
         -e "ssh -i $KEY -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=30" \
         "$SOURCE" "$DEST/" ||
-        fail "couldn't copy the backups from new.imsss.net"
+        fail "couldn't copy the backups from ${SOURCE%%:*}"
 fi
 
 # 2. Thin out copies the server no longer has. 45 days is longer than the

@@ -177,22 +177,24 @@ The backups include password hashes, so keep them only on an encrypted disk, suc
     brew install rsync
     ```
 
-2.  Create a key, and add it to `/home/plone/.ssh/authorized_keys` on the server, restricted to the backups folder.
+2.  Add the `imsss-server` SSH alias for the server, as described in "Logging in to the server" in {doc}`../reference/server`.
+
+3.  Create a key, and add it to `/home/plone/.ssh/authorized_keys` on the server, restricted to the backups folder.
 
     ```shell
     ssh-keygen -t ed25519 -N "" -C "imsss-backup-pull" -f ~/.ssh/imsss_backup_pull
     echo "command=\"/usr/bin/rrsync -ro /home/plone/backups\",restrict $(cat ~/.ssh/imsss_backup_pull.pub)" |
-        ssh plone@new.imsss.net 'cat >> ~/.ssh/authorized_keys'
+        ssh plone@imsss-server 'cat >> ~/.ssh/authorized_keys'
     ```
 
-3.  Install the script.
+4.  Install the script.
 
     ```shell
     mkdir -p ~/.local/bin ~/imsss-backups
     install -m 755 devops/scripts/pull-backups.sh ~/.local/bin/imsss-pull-backups
     ```
 
-4.  Save this as `~/Library/LaunchAgents/net.imsss.backup-pull.plist`, replacing `USER` with your macOS user name.
+5.  Save this as `~/Library/LaunchAgents/net.imsss.backup-pull.plist`, replacing `USER` with your macOS user name.
 
     ```xml
     <?xml version="1.0" encoding="UTF-8"?>
@@ -223,14 +225,14 @@ The backups include password hashes, so keep them only on an encrypted disk, suc
     </plist>
     ```
 
-5.  Load the launchd job, which also runs the first copy, and check the log.
+6.  Load the launchd job, which also runs the first copy, and check the log.
 
     ```shell
     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/net.imsss.backup-pull.plist
     cat ~/imsss-backups/pull.log
     ```
 
-After changing the script in the repository, install it again with step 3.
+After changing the script in the repository, install it again with step 4.
 To stop the copies, run `launchctl bootout gui/$(id -u)/net.imsss.backup-pull` and delete the plist file.
 
 To restore from the Mac's copy, copy the files back to `/home/plone/backups` on the server, or point `repozo -R -r` at a folder holding them.

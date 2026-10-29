@@ -136,7 +136,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://new.imsss.net/
 ```
 
 Then open the site in a browser **without** an SSH tunnel and check that it's styled, that you can log in, and that editing works.
-Also check that port 3000 isn't reachable from outside, for example with `curl -m 8 http://new.imsss.net:3000/` from your own computer.
+Also check that port 3000 isn't reachable from outside, for example with `curl -m 8 http://SERVER-ADDRESS:3000/` from your own computer, using the server's own IPv4 address.
 
 Browser tabs opened before the switch still run the development server's scripts.
 Editing in such a tab fails with `Loading chunk Form failed`, naming a `localhost:3001` address.
