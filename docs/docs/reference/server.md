@@ -298,6 +298,15 @@ Bot Fight Mode
     It applies to the whole zone, and the free plan allows no exceptions, so if a legitimate tool, such as an uptime monitor or a script that uses the API, starts getting challenges, turn it off.
     Browsing, logging in, the API, and certificate renewal all still worked after it was turned on.
 
+AI crawlers
+:   Allowed.
+    {guilabel}`AI Labyrinth` is off, and no AI bot policy blocks them.
+
+IP access rules
+:   None.
+    Ten {guilabel}`Allow` rules for hosting companies' addresses, left over from earlier setups and without notes, were deleted on October 29, 2026.
+    An {guilabel}`Allow` rule exempts an address from every Cloudflare security check, so add one only for a known need, with a note saying what it's for.
+
 DNSSEC
 :   Turned on October 29, 2026, under {guilabel}`DNS` → {guilabel}`Settings`.
     The domain is registered with Cloudflare, so Cloudflare publishes the DS record itself.
