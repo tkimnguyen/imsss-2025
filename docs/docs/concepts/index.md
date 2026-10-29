@@ -24,4 +24,5 @@ https://diataxis.fr/explanation/
 
 architecture
 hosting-options
+memory-and-disk
 ```

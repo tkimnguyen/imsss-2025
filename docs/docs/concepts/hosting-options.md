@@ -17,6 +17,7 @@ For how the site is put together, see {doc}`architecture`.
 
 Until October 29, 2026, the server had 3.8 GB of memory, but the running site used only a fraction of that.
 It now runs on Linode's 1 GB plan, with 1 vCPU, 961 MB of usable memory, and 2.5 GB of swap.
+See {doc}`memory-and-disk` for what was changed to make that possible.
 
 ### Memory use
 

@@ -64,6 +64,7 @@ The `backend/instance/` folder is generated during installation and isn't in git
 On October 28, 2026, folders left over from earlier work were removed to free disk space: `~/imsss.net` (a checkout of the older `tkimnguyen/imsss.net` site), `~/clean-test-plone-6.1.3`, `~/imsss.net-migration-20251014`, and `/root/imsss.net migration 20251014` (the database and blobs from before the migration to this site).
 A copy of the old site's data and uncommitted files, and of the pre-migration database and blobs, was kept off the server first.
 Caches, an unused Node.js version, old snap revisions, and failed-login logs were also removed, and the journal was limited to 200 MB.
+See {doc}`../concepts/memory-and-disk` for the sizes, and for how to check memory and disk use.
 
 ## Services
 
