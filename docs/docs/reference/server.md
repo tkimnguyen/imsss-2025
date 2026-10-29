@@ -158,9 +158,13 @@ Port 443
     - Everything else goes to the frontend.
 
 Port 80
-:   Redirects `new.imsss.net` to HTTPS.
+:   Redirects `new.imsss.net` to HTTPS, and returns `404` for any other host name or for the server's IP address.
 
-`/etc/nginx/sites-enabled/` also links to nginx's `default` site, so a request on port 80 for any other host name, or for the server's IP address, gets the "Welcome to nginx!" page.
+`plone.conf` is the only site in `/etc/nginx/sites-enabled/`.
+nginx's `default` site, which showed a "Welcome to nginx!" page for other host names, was turned off on October 28, 2026, by removing its link from `sites-enabled`.
+Its file is still in `/etc/nginx/sites-available/default`.
+
+nginx listens only on IPv4, and `new.imsss.net` has no IPv6 (`AAAA`) record.
 
 ## HTTPS certificate
 

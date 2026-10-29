@@ -27,6 +27,8 @@ The frontend switched from the Volto development server to a production build on
 
 The frontend is built in CI, not on the server.
 For every push to `main` that changes the frontend, the `production-build` job in `.github/workflows/frontend.yml` builds it and uploads the build as an artifact named `frontend-build-<commit>`, kept for 90 days.
+The commit is the last one that changed the frontend.
+If a build has expired, start the CI workflow by hand, from the Actions tab or with `gh workflow run main.yml`, to build it again.
 `devops/scripts/deploy.sh` downloads that build and deploys it.
 
 1.  Push your commits to `main` on GitHub and wait until CI passes.

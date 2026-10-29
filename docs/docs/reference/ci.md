@@ -17,7 +17,8 @@ See the deployment section of `devops/README.md`.
 ## Main workflow (`main.yml`)
 
 Runs on every push that changes `backend/`, `frontend/`, `docs/`, `devops/`, `.readthedocs.yaml`, or the workflow files themselves.
-It can also be started by hand.
+It can also be started by hand, from the {guilabel}`Actions` tab on GitHub or with `gh workflow run main.yml`.
+A run started by hand runs every job, whatever changed.
 
 A `config` job works out which parts of the repository changed and runs only the matching jobs:
 
@@ -52,16 +53,17 @@ Run `pnpm prettier` and `pnpm stylelint` in `frontend/` to see every problem at 
 ### Frontend build for new.imsss.net
 
 The `production-build` job in `frontend.yml` builds the frontend that new.imsss.net runs, so that the server never has to.
-It runs only for pushes to `main`, after the code analysis passes.
+It runs for pushes to `main` that change the frontend, and for runs of the main workflow started by hand on `main`, after the code analysis passes.
 
 - It copies the checkout to `/home/plone/imsss.net-plone-6.1.3/imsss-2025`, the same path as on the server, and builds there.
   The build embeds the absolute paths of the add-ons it was built with, so the paths must match.
 - It builds with the same `RAZZLE_*` settings as `/etc/imsss-frontend.env` on the server.
   The values are set in the job's `env`, and must be kept in step with that file.
-- It writes the commit hash to `build/BUILD_COMMIT`, and uploads `build/` as `frontend-build.tar.gz` in an artifact named `frontend-build-<commit>`, kept for 90 days.
+- It names the build after the most recent commit that changed `frontend/` or `frontend.yml`, which may be older than the commit being built.
+  It writes that commit's hash to `build/BUILD_COMMIT`, and uploads `build/` as `frontend-build.tar.gz` in an artifact named `frontend-build-<commit>`, kept for 90 days.
 
-`devops/scripts/deploy.sh` on the server downloads that artifact.
-Because the job runs only when the frontend changes, the script uses the build from the most recent commit that changed `frontend/` or `frontend.yml`.
+`devops/scripts/deploy.sh` on the server downloads that artifact, looking it up by the same commit.
+If the build has expired, start the main workflow by hand to make a new one.
 
 ## Varnish Image Creation (`varnish.yml`)
 

@@ -58,7 +58,8 @@ If you're not sure the backup is good, restore it to a new Linode first, as desc
     Linode creates it in the same region as the backup.
 3.  When the new Linode is running, turn on the Backup Service for it under {guilabel}`Backups`.
     Backups belong to a Linode, so the new one starts with none.
-4.  Note the new Linode's IPv4 and IPv6 addresses, then change the `A` and `AAAA` records for `new.imsss.net` to them.
+4.  Note the new Linode's IPv4 address, then change the `A` record for `new.imsss.net` to it.
+    The site has no IPv6 (`AAAA`) record, because nginx listens only on IPv4.
 5.  Wait for the DNS change to reach you.
 
     ```shell
@@ -82,7 +83,7 @@ Run the commands as root unless a step says `plone`.
 
 1.  In Cloud Manager, create a Linode with Ubuntu 24.04 LTS, at least 1 GB of memory, and your SSH public key as a root key.
     Turn on the Backup Service.
-2.  Change the `A` and `AAAA` records for `new.imsss.net` to the new Linode's addresses.
+2.  Change the `A` record for `new.imsss.net` to the new Linode's IPv4 address.
     The HTTPS certificate in step 7 needs them.
 3.  Remove the old server's host key from your computer, and log in.
 
@@ -216,14 +217,12 @@ Use the blob archive from the same day as the newest database backup.
     The script fails at the end, because nginx isn't set up yet, but the frontend is running.
     Check it with `curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/`.
 
-CI keeps each build for 90 days, and builds only when a push changes the frontend.
-If the frontend hasn't changed for longer than that, there's no build to download.
-Then either push a change to the frontend and wait for CI, or create the Linode with 4 GB of memory, build on the server as described in the deployment section of `devops/README.md`, and resize the Linode afterward.
+CI keeps each build for 90 days.
+If the script finds no build, start the main workflow by hand, with `gh workflow run main.yml` or from the {guilabel}`Actions` tab on GitHub, wait for it to pass, and run the script again.
 
 ### 7. Set up nginx and the certificate, as root
 
-1.  Create `/etc/nginx/sites-enabled/plone.conf`, and remove nginx's default site.
-    The old server kept the default site, which only shows "Welcome to nginx!" for other host names, so the site doesn't need it.
+1.  Create `/etc/nginx/sites-enabled/plone.conf`, and remove nginx's default site, as on the old server.
 
     ```nginx
     upstream backend {
