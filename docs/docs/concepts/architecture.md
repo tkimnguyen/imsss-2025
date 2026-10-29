@@ -1,10 +1,10 @@
 ---
 myst:
   html_meta:
-    "description": "How new.imsss.net is put together: nginx, Volto, Plone, and the ZODB"
-    "property=og:description": "How new.imsss.net is put together: nginx, Volto, Plone, and the ZODB"
+    "description": "How new.imsss.net is put together: Cloudflare, nginx, Volto, Plone, and the ZODB"
+    "property=og:description": "How new.imsss.net is put together: Cloudflare, nginx, Volto, Plone, and the ZODB"
     "property=og:title": "Architecture of new.imsss.net"
-    "keywords": "Plone, IMSSS 2025, architecture, Volto, nginx, ZODB, REST API"
+    "keywords": "Plone, IMSSS 2025, architecture, Cloudflare, Volto, nginx, ZODB, REST API"
 ---
 
 # Architecture of new.imsss.net
@@ -19,11 +19,13 @@ Volto (the frontend)
 :   A React application that fetches content from the backend and turns it into pages.
     It renders each page on the server for the first request, then runs in the visitor's browser and fetches further content directly from the REST API.
 
-nginx sits in front of both, on the only ports open to the internet.
+nginx sits in front of both on the server.
+Since October 29, 2026, Cloudflare sits in front of nginx: visitors connect to Cloudflare, and the server's firewall accepts web traffic only from Cloudflare.
 
 ```{mermaid}
 flowchart LR
-    browser([Visitor's browser]) -- "HTTPS :443" --> nginx
+    browser([Visitor's browser]) -- "HTTPS" --> cf["Cloudflare<br/>security rules, page cache"]
+    cf -- "HTTPS :443" --> nginx
     nginx -- "/++api++/…" --> plone["Plone backend<br/>127.0.0.1:8080"]
     nginx -- "every other path" --> volto["Volto frontend<br/>127.0.0.1:3000"]
     volto -- "content requests while rendering" --> plone
@@ -33,11 +35,16 @@ flowchart LR
 ## How a page request flows
 
 1.  A visitor requests `https://new.imsss.net/about-imsss/council-members`.
-2.  nginx terminates TLS and forwards the request to Volto on port 3000.
-3.  Volto asks Plone for the page's content, renders the HTML, and returns it with links to the site's JavaScript and CSS.
-4.  The browser loads that JavaScript, and Volto takes over in the browser.
+2.  Cloudflare receives the request, and blocks it if it looks like an attack or comes from a bot.
+    If the visitor isn't logged in and Cloudflare has a copy of the page from the last 5 minutes, it returns that copy, and the server never sees the request.
+3.  Otherwise, Cloudflare forwards the request to nginx on the server, which forwards it to Volto on port 3000.
+4.  Volto asks Plone for the page's content, renders the HTML, and returns it with links to the site's JavaScript and CSS.
+5.  The browser loads that JavaScript, and Volto takes over in the browser.
     When the visitor follows a link, Volto requests only the content, from `https://new.imsss.net/++api++/...`.
-5.  nginx sends those `/++api++` requests straight to Plone.
+6.  Cloudflare passes those `/++api++` requests on without caching them, and nginx sends them straight to Plone.
+
+Logged-in editors have an `auth_token` cookie, so Cloudflare never serves them a cached page.
+See "Cloudflare" in {doc}`../reference/server` for its settings, and {doc}`hosting-options` for why the site uses it.
 
 ## Why nginx rewrites `/++api++` paths
 

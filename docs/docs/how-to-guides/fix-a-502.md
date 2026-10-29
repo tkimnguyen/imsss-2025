@@ -12,6 +12,12 @@ myst:
 nginx returns `502 Bad Gateway` when the app it forwards a request to isn't answering.
 The frontend handles every page and the backend handles `/++api++`, so a 502 on every page almost always means the frontend.
 
+The site is behind Cloudflare, so visitors see a Cloudflare error page for code 502.
+Its diagram marks {guilabel}`Host` as the part with the error, because the 502 came from the server.
+For Cloudflare's other error codes, such as 521 or 522, see {doc}`fix-an-unresponsive-site` instead.
+
+Pages that Cloudflare has cached keep working for up to 5 minutes, so some pages may load while others show the error.
+
 Run the commands in this guide on the server as root.
 
 ```shell
@@ -86,13 +92,21 @@ The next run of `deploy.sh` deploys the build of the newest commit that changed 
 So fix the problem in the repository first, wait for CI to pass, and then deploy again.
 Delete `build.failed` once the fix is deployed.
 
-## 4. Check the site from outside
+## 4. Check the site
+
+On the server, check nginx directly, without Cloudflare:
+
+```shell
+curl -s -o /dev/null -w '%{http_code}\n' --resolve new.imsss.net:443:127.0.0.1 https://new.imsss.net/
+```
+
+Then, from your own computer, check it through Cloudflare:
 
 ```shell
 curl -s -o /dev/null -w '%{http_code}\n' https://new.imsss.net/
 ```
 
-You should see `200`.
+You should see `200` both times.
 Also open the site in a browser without an SSH tunnel, for example on your phone over mobile data, to see it as visitors do.
 
 ## Known causes

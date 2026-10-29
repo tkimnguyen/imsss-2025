@@ -8,7 +8,8 @@
 
 | Component | How it runs |
 | --- | --- |
-| Server | `new.imsss.net`, Ubuntu 24.04 LTS, 2 vCPU, 3.8 GB RAM, 25 GB disk |
+| Server | A Linode 1 GB plan, since October 29, 2026: Ubuntu 24.04 LTS, 1 vCPU, 1 GB RAM, 2.5 GB swap, 25 GB disk. SSH goes to the server's own address through an `imsss-server` alias, because `new.imsss.net` points to Cloudflare; see "Logging in to the server" in `docs/docs/reference/server.md`. |
+| Cloudflare | Proxies `new.imsss.net`. Visitors connect to Cloudflare, which blocks bots, scanners, and attacks, caches pages for 5 minutes for visitors who aren't logged in, and connects to nginx. See "Cloudflare" in `docs/docs/reference/server.md`. |
 | Code | A git checkout of this repository at `/home/plone/imsss.net-plone-6.1.3/imsss-2025`, owned by the `plone` user, on `main` |
 | Backend | `imsss-backend.service` runs Plone 6.1.3 (Python 3.12) with `backend/.venv/bin/runwsgi backend/instance/etc/zope.ini`, listening on `127.0.0.1:8080`. The Plone site ID is `Plone`. |
 | Database | ZODB FileStorage at `backend/instance/var/filestorage/Data.fs`, with images and files in `backend/instance/var/blobs`. There is no PostgreSQL. |
@@ -50,8 +51,8 @@ The script:
 - installs backend dependencies if they changed, and restarts the backend if `backend/` changed
 - checks that `https://new.imsss.net/` responds
 
-Because nothing is built on the server, the server needs only enough memory to run the site, about 700–800 MB.
-On a server with 1 GB of memory, add a swap file first, as described in the "Swap" section of `docs/docs/reference/server.md`.
+Because nothing is built on the server, the server needs only enough memory to run the site, about 650 MB on the 1 GB plan.
+The server also has 2.5 GB of swap, as described in the "Swap" section of `docs/docs/reference/server.md`, so reinstalling frontend dependencies during a deploy doesn't run out of memory.
 
 A frontend deploy makes the site unavailable only for the few seconds of the restart.
 Visitors with the site already open may need to reload the page to get the new version.

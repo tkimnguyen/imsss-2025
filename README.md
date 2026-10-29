@@ -91,7 +91,7 @@ This monorepo consists of the following distinct sections:
 
 - **backend**: Houses the API and Plone installation, utilizing pip instead of buildout, and includes a policy package named imsss_2025.
 - **frontend**: Contains the React (Volto) package.
-- **devops**: Holds `scripts/deploy.sh`, which deploys the live site, and `scripts/pull-backups.sh`, which copies its backups off the server. It also holds the Docker stack, Ansible playbooks, and cache settings from the project template, which the live site doesn't use. See [Deployment](#deployment-).
+- **devops**: Holds `scripts/deploy.sh`, which deploys the live site, `scripts/pull-backups.sh`, which copies its backups off the server, and `scripts/apply-cloudflare-ranges.sh`, which limits the server's web ports to Cloudflare's address ranges in `cloudflare-ips.txt`. It also holds the Docker stack, Ansible playbooks, and cache settings from the project template, which the live site doesn't use. See [Deployment](#deployment-).
 - **docs**: Scaffold for writing documentation for your project.
 
 ### Why this structure? 🤔

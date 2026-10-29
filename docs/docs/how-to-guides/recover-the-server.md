@@ -60,7 +60,7 @@ If you're not sure the backup is good, restore it to a new Linode first, as desc
     Backups belong to a Linode, so the new one starts with none.
 4.  Note the new Linode's IPv4 address.
     In the Cloudflare dashboard, change the `A` record for `new` in the `imsss.net` zone to it, and leave it {guilabel}`Proxied`.
-    The site has no IPv6 (`AAAA`) record, because nginx listens only on IPv4.
+    Don't add an IPv6 (`AAAA`) record: Cloudflare serves the site over IPv6 itself, and nginx listens only on IPv4.
 5.  On your computer, and on the Mac that copies the backups, change `HostName` for `imsss-server` in `~/.ssh/config` to the new address.
     See "Logging in to the server" in {doc}`../reference/server`.
     Cloudflare applies the DNS change within a few minutes.

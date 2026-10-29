@@ -24,6 +24,7 @@ https://diataxis.fr/how-to-guides/
 
 back-up-and-restore
 recover-the-server
+fix-an-unresponsive-site
 fix-a-502
 switch-frontend-to-production
 work-with-a-copy-of-live-data
