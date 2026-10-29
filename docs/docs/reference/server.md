@@ -329,6 +329,28 @@ Login rate limit
     Cloudflare counts across its data centers, so the block can start an attempt or two after the limit.
     The free plan allows only this one rate limiting rule, and only a 10-second block, so it stops fast guessing but not slow, patient guessing.
 
+Page cache
+:   A cache rule, `Cache pages on new.imsss.net for visitors`, added October 29, 2026, keeps copies of pages at Cloudflare for 5 minutes, for visitors who aren't logged in:
+
+    ```text
+    (http.host eq "new.imsss.net"
+      and not http.cookie contains "auth_token"
+      and not starts_with(http.request.uri.path, "/++api++")
+      and not starts_with(http.request.uri.path, "/static/"))
+    ```
+
+    The rule sets {guilabel}`Edge TTL` to "Ignore cache-control header and use this TTL", 5 minutes, and {guilabel}`Browser TTL` to {guilabel}`Respect origin TTL`.
+    Volto keeps a logged-in user's session in the `auth_token` cookie, so editors always get live pages.
+    The API, under `/++api++`, isn't cached, and `/static/` is cached through its own one-year headers.
+    The site's only language is English, and Volto uses it for every visitor, so one cached copy suits everyone.
+
+    After an edit, visitors who aren't logged in see the change within 5 minutes.
+    To show it at once, go to {guilabel}`Caching` → {guilabel}`Configuration` → {guilabel}`Purge Cache` → {guilabel}`Custom Purge`, and enter the page's address, for example `https://new.imsss.net/congress`.
+    {guilabel}`Purge Everything` empties the whole zone's cache, including `imsss.net`'s.
+
+    The response header `cf-cache-status` shows `HIT` for a page served from the cache, `MISS` for one fetched from the server, and `DYNAMIC` for one that isn't cached.
+    Each Cloudflare data center keeps its own copy, so the first request through each one is a `MISS`.
+
 AI crawlers
 :   Allowed.
     {guilabel}`AI Labyrinth` is off, and no AI bot policy blocks them.

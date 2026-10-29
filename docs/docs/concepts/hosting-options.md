@@ -120,10 +120,11 @@ The server's address is hidden
 
 ### What it wouldn't change
 
-Pages would still be generated for each visit
-:   By default, Cloudflare doesn't cache the pages themselves, so every page view would still go through Volto and Plone.
-    A rule can tell Cloudflare to cache pages too, but it must never cache pages for logged-in editors, who are identified by an `auth_token` cookie.
-    Check whether the free plan can make caching decisions based on a cookie before relying on such a rule.
+Pages are generated for each visit, unless a rule caches them
+:   By default, Cloudflare doesn't cache the pages themselves, so every page view goes through Volto and Plone.
+    Since October 29, 2026, a cache rule keeps pages for 5 minutes for visitors who aren't logged in, and skips the cache for logged-in editors, who have an `auth_token` cookie.
+    The free plan supports such cookie-based rules.
+    Navigating within the site still goes through Volto and Plone, because the API isn't cached.
 
 Outages would still be visible
 :   If the frontend stopped responding, visitors would see a Cloudflare error page instead of nginx's.
