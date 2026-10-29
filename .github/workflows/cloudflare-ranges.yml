@@ -1,0 +1,34 @@
+name: Cloudflare address ranges
+
+# new.imsss.net's firewall allows web traffic only from Cloudflare's address
+# ranges, listed in devops/cloudflare-ips.txt. This fails, and GitHub sends an
+# email, if Cloudflare's published ranges no longer match that list. To fix it,
+# update the list, deploy, and run devops/scripts/apply-cloudflare-ranges.sh
+# on the server as root.
+
+on:
+  schedule:
+    - cron: "17 9 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compare the list with Cloudflare's published ranges
+        run: |
+          published=$( { curl -fsS https://www.cloudflare.com/ips-v4; echo; curl -fsS https://www.cloudflare.com/ips-v6; echo; } | sed '/^$/d' | sort)
+          listed=$(grep -vE '^\s*(#|$)' devops/cloudflare-ips.txt | sort)
+          [ "$(echo "$published" | wc -l)" -ge 10 ] || { echo "::error::Cloudflare returned too few ranges"; exit 1; }
+          if [ "$published" != "$listed" ]; then
+            echo "::error::Cloudflare's ranges changed. Update devops/cloudflare-ips.txt, deploy, and run devops/scripts/apply-cloudflare-ranges.sh on the server."
+            diff <(echo "$listed") <(echo "$published") || true
+            exit 1
+          fi
+          echo "devops/cloudflare-ips.txt matches Cloudflare's $(echo "$listed" | wc -l) published ranges."
