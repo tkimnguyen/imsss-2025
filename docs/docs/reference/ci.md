@@ -65,6 +65,16 @@ It runs for pushes to `main` that change the frontend, and for runs of the main 
 `devops/scripts/deploy.sh` on the server downloads that artifact, looking it up by the same commit.
 If the build has expired, start the main workflow by hand to make a new one.
 
+## Cloudflare address ranges (`cloudflare-ranges.yml`)
+
+Runs at 09:17 UTC on the first day of each month, and can be started by hand.
+It compares `devops/cloudflare-ips.txt` with Cloudflare's published address ranges, and fails if they differ, listing the changes.
+The server's firewall accepts web traffic only from the ranges in that file, so a failed run means the firewall needs updating; see "Cloudflare" in {doc}`server`.
+
+GitHub emails a failed scheduled run to whoever last changed the workflow's schedule.
+GitHub turns off scheduled workflows in a public repository after 60 days without commits, and emails a warning first.
+If that happens, turn the workflow on again from the Actions tab.
+
 ## Varnish Image Creation (`varnish.yml`)
 
 Builds and pushes a Varnish cache image from `devops/varnish/` when that folder changes.

@@ -21,7 +21,7 @@ For an explanation of how the parts fit together, see {doc}`../concepts/architec
 | Resources | Linode 1 GB plan since October 29, 2026: 1 vCPU, 1 GB RAM (961 MB usable), 2.5 GB swap (512 MB partition and 2 GB `/swapfile`), 25 GB disk. Before that, 2 vCPU and 4 GB RAM |
 | SSH user for the site | `plone` |
 | Docker | Not installed |
-| Firewall | `ufw`, allowing only SSH (22) and HTTP/HTTPS (80, 443) from outside; enabled on October 28, 2026. One address is blocked; see "Connection tracking" below |
+| Firewall | `ufw`, enabled on October 28, 2026. It allows SSH (22) from anywhere, and since October 29, 2026, HTTP and HTTPS (80, 443) only from Cloudflare's address ranges; see "Cloudflare" below. One address is also blocked; see "Connection tracking" |
 | SSH logins | Keys only, for every account; root may log in with a key but never with a password. Set on October 28, 2026 |
 | SSH protection | fail2ban bans addresses that keep failing to log in over SSH; set up on October 28, 2026 |
 
@@ -274,26 +274,46 @@ A Configuration Rule for the host name `new.imsss.net` sets the SSL mode to {gui
 If that check ever fails, visitors see Cloudflare's error 526 instead of the site.
 
 SSH doesn't go through Cloudflare, as "Logging in to the server" explains.
-Firewall rules and fail2ban bans apply only to connections made directly to the server, not to visitors who come through Cloudflare.
-Block those in the Cloudflare dashboard instead.
+
+The firewall accepts web traffic, on ports 80 and 443, only from Cloudflare's address ranges, so nobody can reach the site without going through Cloudflare.
+A direct connection to the server's address on those ports times out.
+certbot still renews the certificate, because Let's Encrypt reaches the server through Cloudflare.
+To block a visitor, use the Cloudflare dashboard, because the firewall and fail2ban only see Cloudflare's addresses for web traffic.
 
 Every request reaches nginx from one of Cloudflare's addresses.
 `/etc/nginx/conf.d/cloudflare-realip.conf` makes nginx take the visitor's real address from the `CF-Connecting-IP` header that Cloudflare adds, so the access log, and the `X-Real-IP` and `X-Forwarded-For` headers that nginx passes to Plone, show the visitor.
 It trusts that header only from Cloudflare's address ranges, so a client that connects directly can't fake its address.
-The file has one `set_real_ip_from` line for each range, from <https://www.cloudflare.com/ips-v4> and <https://www.cloudflare.com/ips-v6> as of October 29, 2026, followed by:
+The file has one `set_real_ip_from` line for each of Cloudflare's ranges, followed by:
 
 ```nginx
 real_ip_header CF-Connecting-IP;
 ```
 
-To rebuild it, for example when Cloudflare adds ranges, run this as root:
+### Cloudflare's address ranges
+
+The firewall rules and the nginx file both come from `devops/cloudflare-ips.txt`, a copy of Cloudflare's published ranges at <https://www.cloudflare.com/ips-v4> and <https://www.cloudflare.com/ips-v6>.
+`devops/scripts/apply-cloudflare-ranges.sh` applies the list.
+Run it on the server as root:
 
 ```shell
-{ for r in $(curl -fsS https://www.cloudflare.com/ips-v4) $(curl -fsS https://www.cloudflare.com/ips-v6); do
-    echo "set_real_ip_from $r;"; done
-  echo "real_ip_header CF-Connecting-IP;"; } > /etc/nginx/conf.d/cloudflare-realip.conf
-nginx -t && systemctl reload nginx
+/home/plone/imsss.net-plone-6.1.3/imsss-2025/devops/scripts/apply-cloudflare-ranges.sh
 ```
+
+The script rewrites `/etc/nginx/conf.d/cloudflare-realip.conf` and reloads nginx, keeping the old file if nginx rejects the new one.
+It adds a firewall rule, with the comment `cloudflare`, for each range, and removes `cloudflare` rules for ranges that are no longer in the list.
+It doesn't change any other firewall rule, and running it again when nothing has changed does nothing.
+
+Every month, the `cloudflare-ranges.yml` workflow checks the list against Cloudflare's published ranges; see {doc}`ci`.
+If Cloudflare changes them, the workflow fails and GitHub emails the repository's owner.
+A missing range would make some visitors see Cloudflare's error 522, so when that happens:
+
+1.  Update `devops/cloudflare-ips.txt` with the ranges that the failed run lists, and push it.
+2.  Deploy, so that the server's checkout has the new list.
+3.  Run `apply-cloudflare-ranges.sh` on the server as root.
+4.  Run the workflow by hand, from the Actions tab or with `gh workflow run cloudflare-ranges.yml`, and check that it passes.
+
+The web ports were closed to everything else on October 29, 2026, by removing the `Nginx Full` rules with `ufw delete allow 'Nginx Full'`.
+To open them again, for example if Cloudflare is ever turned off for the site, run `ufw allow 'Nginx Full'` as root.
 
 ## Connection tracking
 
@@ -333,8 +353,7 @@ ufw insert 1 deny from 15.204.77.139 comment "connection flood, October 29, 2026
 ```
 
 `ufw status numbered` lists it as rule 1.
-To remove it, run `ufw delete 1` as root, after checking that it's still rule 1.
-Block any other address that does the same, in the same way.
+Since the web ports now accept only Cloudflare's addresses, this rule is no longer needed, and `ufw delete deny from 15.204.77.139` removes it.
 
 ## Reach the apps from your computer
 

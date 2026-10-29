@@ -149,9 +149,9 @@ Visitor addresses
 :   nginx and Plone would see Cloudflare's addresses instead of visitors' real ones.
     nginx's `real_ip` settings need to list Cloudflare's address ranges, so that logs and Plone's `X-Forwarded-For` header still show the real visitor.
 
-Firewall (optional)
-:   Ports 80 and 443 could be limited to Cloudflare's address ranges.
-    Cloudflare changes those ranges from time to time, so the firewall rules would need occasional updates.
+Firewall
+:   Ports 80 and 443 can be limited to Cloudflare's address ranges, so that bots can't go around Cloudflare.
+    Cloudflare changes those ranges from time to time, so the firewall rules need occasional updates.
 
 ### Steps used
 
@@ -159,7 +159,7 @@ Firewall (optional)
 2.  Add a Configuration Rule that sets the SSL mode to {guilabel}`Full (strict)` for `new.imsss.net`, leaving the rest of the zone unchanged.
 3.  Add an SSH alias for the server's own address, and use it in scripts and docs.
 4.  Configure nginx's `real_ip` settings, and test viewing the site and certificate renewal.
-5.  If wanted, limit the firewall to Cloudflare's address ranges.
+5.  Limit the firewall to Cloudflare's address ranges, with a monthly check that the ranges haven't changed.
 
 Cloudflare's free plan features change from time to time.
 Check the current plan details, especially cookie-based caching rules, before deciding.

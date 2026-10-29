@@ -105,11 +105,11 @@ Then set up, as described in {doc}`../reference/server`:
 - the connection-tracking files `/etc/sysctl.d/60-imsss-conntrack.conf` and `/etc/modules-load.d/imsss-conntrack.conf`, then `sysctl --system`, from "Connection tracking"
 - the journal limit, `/etc/systemd/journald.conf.d/size.conf` with `SystemMaxUse=200M`, then `systemctl restart systemd-journald`
 
-Turn on the firewall:
+Turn on the firewall, allowing only SSH for now.
+Step 7 opens the web ports to Cloudflare.
 
 ```shell
 ufw allow OpenSSH
-ufw allow 'Nginx Full'
 ufw enable
 ```
 
@@ -278,9 +278,10 @@ If the script finds no build, start the main workflow by hand, with `gh workflow
     }
     ```
 
-    Also create `/etc/nginx/conf.d/cloudflare-realip.conf`, as described in "Cloudflare" in {doc}`../reference/server`, then:
+    Then run the script that allows web traffic from Cloudflare's address ranges, and creates `/etc/nginx/conf.d/cloudflare-realip.conf`, as described in "Cloudflare" in {doc}`../reference/server`, and remove the default site:
 
     ```shell
+    /home/plone/imsss.net-plone-6.1.3/imsss-2025/devops/scripts/apply-cloudflare-ranges.sh
     rm /etc/nginx/sites-enabled/default
     nginx -t && systemctl reload nginx
     ```
@@ -319,7 +320,7 @@ Run these on the server as root:
 ```shell
 systemctl status imsss-backend.service imsss-frontend.service nginx --no-pager | grep -E "●|Active"
 ss -ltn | grep -E ':3000|:8080'           # both on 127.0.0.1 only
-ufw status
+ufw status                                # SSH from anywhere, 80,443 only from Cloudflare
 fail2ban-client status sshd
 systemctl list-timers imsss-backup.timer snap.certbot.renew.timer
 certbot certificates | grep -E "Domains|Expiry"

@@ -15,7 +15,7 @@
 | Frontend | `imsss-frontend.service` runs a **production build** of Volto 18.29.1 with `node build/server.js`, listening on `127.0.0.1:3000`. Its settings are in `/etc/imsss-frontend.env`. |
 | Web server | nginx, configured in `/etc/nginx/sites-enabled/plone.conf`. It terminates TLS, sends `/++api++` and `/robots.txt` to the backend (rewritten through the Virtual Host Monster to `/Plone`), and sends everything else to the frontend. HTTP redirects to HTTPS. |
 | TLS certificate | Let's Encrypt, managed by the certbot snap. `snap.certbot.renew.timer` renews it automatically. |
-| Firewall | `ufw` allows only SSH (22) and HTTP/HTTPS (80, 443) from outside. SSH accepts key logins only, and fail2ban bans addresses that repeatedly fail SSH logins. |
+| Firewall | `ufw` allows SSH (22) from anywhere, and HTTP/HTTPS (80, 443) only from Cloudflare, which proxies the site. `devops/scripts/apply-cloudflare-ranges.sh` applies Cloudflare's address ranges from `devops/cloudflare-ips.txt`, and a monthly workflow checks them. SSH accepts key logins only, and fail2ban bans addresses that repeatedly fail SSH logins. |
 | Backups | The Linode Backup Service backs up the whole server, keeping about two weeks of backups. `imsss-backup.timer` also backs up the database and blobs to `/home/plone/backups` daily at 21:30 UTC, keeping 30 days, and the maintainer's Mac copies those off the server every day. See "Backups" in `docs/docs/reference/server.md`. |
 
 The systemd unit files live in `/etc/systemd/system/` on the server and are not in this repository.
