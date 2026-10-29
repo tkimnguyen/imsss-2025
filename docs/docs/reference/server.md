@@ -283,6 +283,16 @@ Two zone-wide settings, under {guilabel}`SSL/TLS` → {guilabel}`Edge Certificat
 :   Set to TLS 1.2, so Cloudflare refuses TLS 1.0 and 1.1.
     TLS 1.3 works.
 
+DNSSEC
+:   Turned on October 29, 2026, under {guilabel}`DNS` → {guilabel}`Settings`.
+    The domain is registered with Cloudflare, so Cloudflare publishes the DS record itself.
+
+Email
+:   The domain sends no email, and has no MX record, so nobody receives mail at `@imsss.net` addresses either.
+    Cloudflare's {guilabel}`Email Security` setting, with {guilabel}`No email is sent from this domain` chosen, publishes `v=spf1 -all` and a DMARC record with `p=reject`, so receiving servers reject mail that claims to come from `imsss.net`.
+    Plone sends no mail either: it has no sender address, and no mail server is installed on the server.
+    Before Plone, or anything else, can send mail as `imsss.net`, set up a mail service and change the SPF and DMARC records to allow it.
+
 SSH doesn't go through Cloudflare, as "Logging in to the server" explains.
 
 The firewall accepts web traffic, on ports 80 and 443, only from Cloudflare's address ranges, so nobody can reach the site without going through Cloudflare.
