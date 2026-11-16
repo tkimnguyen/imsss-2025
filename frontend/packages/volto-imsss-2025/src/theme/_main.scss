@@ -29,6 +29,31 @@
 }
 
 /* --------------------------------------------------
+ * Header spacing
+ *
+ * Tighten the space above and below the logo. The
+ * Log in link moved to the footer (see
+ * config/settings.ts), so the top tools row is
+ * empty: hide it. VLT defaults were 16px above that
+ * row, then 25px above and 35px below the logo row.
+ * VLT also caps the logo box at 80px high, which the
+ * 100px logo overflowed.
+ * -------------------------------------------------- */
+
+.header-wrapper .header .tools-wrapper {
+  display: none;
+}
+
+.header-wrapper .header .logo-nav-wrapper {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.header-wrapper .header .logo-nav-wrapper .logo {
+  max-height: none;
+}
+
+/* --------------------------------------------------
  * Footer logo
  *
  * VLT shows the colophon logo at its natural size
@@ -36,16 +61,40 @@
  * white background with the mark ~8px right of
  * centre, so crop it to a square around the mark.
  * object-position 87.5% = 17.5px of the 20px spare
- * width trimmed from the left.
+ * width trimmed from the left. (The current upload
+ * is square and centred, so the crop is a no-op.)
+ *
+ * The logo is now transparent navy, which is hard to
+ * see on the red footer, so sit it on a white tile.
  * -------------------------------------------------- */
 
 #footer .colophon a img {
   width: 72px;
   max-width: none;
   height: 72px;
+  box-sizing: border-box;
+  padding: 6px;
   border-radius: 8px;
+  background: #fff;
   object-fit: cover;
   object-position: 87.5% 50%;
+}
+
+/* Log in / Log out link, moved here from the header */
+#footer .footer-login {
+  margin-top: 24px;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+
+  a {
+    color: var(--footer-foreground);
+    text-decoration: underline;
+  }
+
+  a + a {
+    margin-left: 16px;
+  }
 }
 
 /* --------------------------------------------------
