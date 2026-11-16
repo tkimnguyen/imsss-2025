@@ -29,6 +29,26 @@
 }
 
 /* --------------------------------------------------
+ * Footer logo
+ *
+ * VLT shows the colophon logo at its natural size
+ * (370 x 350). The uploaded PNG also has an opaque
+ * white background with the mark ~8px right of
+ * centre, so crop it to a square around the mark.
+ * object-position 87.5% = 17.5px of the 20px spare
+ * width trimmed from the left.
+ * -------------------------------------------------- */
+
+#footer .colophon a img {
+  width: 72px;
+  max-width: none;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+  object-position: 87.5% 50%;
+}
+
+/* --------------------------------------------------
  * EEA Hero block / VLT integration
  * -------------------------------------------------- */
 
