@@ -30,10 +30,10 @@ jobs:
     steps:
 
         - name: Checkout
-          uses: actions/checkout@v4
+          uses: actions/checkout@v7
 
         - name: Install the latest version of uv
-          uses: astral-sh/setup-uv@v5
+          uses: astral-sh/setup-uv@v10.3.3
           with:
             python-version: ${{ inputs.python-version }}
             enable-cache: true
@@ -83,16 +83,16 @@ jobs:
     steps:
 
         - name: Checkout
-          uses: actions/checkout@v4
+          uses: actions/checkout@v7
 
         - name: Install the latest version of uv
-          uses: astral-sh/setup-uv@v5
+          uses: astral-sh/setup-uv@v10.3.3
           with:
             python-version: ${{ inputs.python-version }}
             enable-cache: false
 
         - name: Restore uv cache
-          uses: actions/cache@v4
+          uses: actions/cache@v6
           with:
             path: ${{ env.UV_CACHE_DIR }}
             key: uv-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.plone-version }}-${{ hashFiles('pyproject.toml') }}
@@ -112,16 +112,16 @@ jobs:
       - test
     steps:
         - name: Checkout
-          uses: actions/checkout@v4
+          uses: actions/checkout@v7
 
         - name: Install the latest version of uv
-          uses: astral-sh/setup-uv@v5
+          uses: astral-sh/setup-uv@v10.3.3
           with:
             python-version: ${{ inputs.python-version }}
             enable-cache: false
 
         - name: Restore uv cache
-          uses: actions/cache@v4
+          uses: actions/cache@v6
           with:
             path: /tmp/.uv-cache
             key: uv-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.plone-version }}-${{ hashFiles('pyproject.toml') }}
@@ -152,11 +152,11 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ inputs.image-name-prefix }}-${{ inputs.image-name-suffix }}
@@ -170,20 +170,20 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           platforms: linux/amd64
           context: backend/

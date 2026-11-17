@@ -28,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codebase
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Use Node.js ${{ inputs.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
 
@@ -45,7 +45,7 @@ jobs:
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         name: Setup pnpm cache
         with:
           path: ${{ env.STORE_PATH }}
@@ -102,7 +102,7 @@ jobs:
       RAZZLE_BIND_ADDRESS: 127.0.0.1
     steps:
       - name: Checkout codebase
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -122,7 +122,7 @@ jobs:
           cp -a "$GITHUB_WORKSPACE" "$SERVER_CHECKOUT"
 
       - name: Use Node.js ${{ inputs.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
 
@@ -147,7 +147,7 @@ jobs:
         run: tar -czf "$RUNNER_TEMP/frontend-build.tar.gz" build
 
       - name: Upload the build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-build-${{ steps.frontend-commit.outputs.sha }}
           path: ${{ runner.temp }}/frontend-build.tar.gz
@@ -166,11 +166,11 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ inputs.image-name-prefix }}-${{ inputs.image-name-suffix }}
@@ -184,20 +184,20 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           platforms: linux/amd64
           context: frontend/

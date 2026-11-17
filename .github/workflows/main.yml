@@ -34,7 +34,7 @@ jobs:
       VOLTO_VERSION: ${{ steps.vars.outputs.VOLTO_VERSION }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Compute several vars needed for the CI
         id: vars
@@ -43,7 +43,7 @@ jobs:
           echo "PLONE_VERSION=$(cat backend/version.txt)" >> $GITHUB_OUTPUT
           python3 -c 'import json; data = json.load(open("./frontend/mrs.developer.json")); print("VOLTO_VERSION=" + (data["core"].get("tag") or "latest"))' >> $GITHUB_OUTPUT
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
