@@ -7,6 +7,11 @@ on:
         required: true
         type: string
 
+# setup-uv v10 does not set UV_CACHE_DIR when its own cache is off,
+# so set it here for uv and for the "Restore uv cache" steps.
+env:
+  UV_CACHE_DIR: /tmp/.uv-cache
+
 defaults:
   run:
     working-directory: docs
