@@ -81,10 +81,7 @@ const EventView = (props) => {
   const { content } = props;
   const Container =
     config.getComponent({ name: 'Container' }).component || SemanticContainer;
-  const formattedDate = formatEventDate(
-    content,
-    config.settings.siteTimeZone,
-  );
+  const formattedDate = formatEventDate(content, config.settings.siteTimeZone);
 
   return (
     <Container id="page-document" className="view-wrapper event-view">

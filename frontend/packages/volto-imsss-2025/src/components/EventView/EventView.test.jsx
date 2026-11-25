@@ -22,7 +22,9 @@ describe('formatEventDate', () => {
       end: '2026-07-06T04:59:59+00:00',
       whole_day: true,
     };
-    expect(formatEventDate(content, site)).toBe('July 1 – 5, 2026');
+    // Newer ICU puts thin spaces around the dash; compare with plain spaces.
+    const text = formatEventDate(content, site).replace(/\s/g, ' ');
+    expect(text).toBe('July 1 – 5, 2026');
   });
 
   it('keeps the time for a timed event', () => {
