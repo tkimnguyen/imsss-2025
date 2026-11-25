@@ -1,4 +1,4 @@
-import { formatSummaryDates } from './EventSummary';
+import { formatSummaryDates } from './dates';
 
 // Newer ICU puts thin spaces around the dash; compare with plain spaces.
 const plain = (s) => s.replace(/\s/g, ' ');

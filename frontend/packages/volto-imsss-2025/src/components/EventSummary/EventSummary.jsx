@@ -17,17 +17,7 @@ import React from 'react';
 import { parseDateFromCatalog } from '@kitconcept/volto-light-theme/helpers/dates';
 import { smartTextRenderer } from '@kitconcept/volto-light-theme/helpers/smartText';
 import config from '@plone/volto/registry';
-
-export const formatSummaryDates = ({ start, end, locale, timeZone }) => {
-  if (!start) return null;
-  const formatter = new Intl.DateTimeFormat(locale || 'default', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    ...(timeZone ? { timeZone } : {}),
-  });
-  return end ? formatter.formatRange(start, end) : formatter.format(start);
-};
+import { formatSummaryDates } from './dates';
 
 const EventSummary = (props) => {
   const { item, HeadingTag = 'h3', a11yLabelId, hide_description } = props;
